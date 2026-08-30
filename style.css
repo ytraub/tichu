@@ -1,0 +1,31 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body,
+html {
+    height: 100%;
+}
+
+canvas {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+
+    background-color: lightgreen;
+
+    box-shadow: 10px 10px lightblue;
+}
+
+.screen {
+    width: 100%;
+    height: 100%;
+
+    padding: 2rem;
+
+    box-sizing: border-box;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
