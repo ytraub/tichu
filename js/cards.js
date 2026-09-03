@@ -1,3 +1,6 @@
+export const ORIGIN_CARD_WIDTH = 56
+export const ORIGIN_CARD_HEIGHT = 79.5
+
 export class Card {
     constructor(color, value, row, col) {
         this.color = color
@@ -14,11 +17,11 @@ export class Card {
 }
 
 function row(n, offset = 1) {
-    return ((n) * 61) + offset
+    return ((n) * (ORIGIN_CARD_WIDTH + 5)) + offset
 }
 
 function col(n, offset = 1) {
-    return ((n) * 84.5) + offset
+    return ((n) * (ORIGIN_CARD_HEIGHT + 5)) + offset
 }
 
 export const CARD_MAP = new Map([

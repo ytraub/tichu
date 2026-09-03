@@ -1,5 +1,5 @@
 import resources from "./resources.js";
-import { CARD_MAP } from "./cards.js";
+import { CARD_MAP, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT } from "./cards.js";
 
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
@@ -8,6 +8,7 @@ const CARD_WIDTH = 75
 const CARD_HEIGHT = 100
 
 const PADDING = 20
+const CARD_PADDING = 5
 
 const UPDATE_RATE = 1000 / 30 // 30 times per second
 
@@ -81,7 +82,7 @@ class Game {
     async render() {
         this.clearScreen()
 
-        this.renderHand(["mahong", "red_2", "red_3", "red_4", "red_5", "dragon"])
+        this.renderHand(["red_j", "red_2", "red_3", "red_4", "red_5", "dragon"])
     }
 
     renderCard(id, pos_x, pos_y) {
@@ -93,16 +94,16 @@ class Game {
 
         const { x, y } = card.get_origin()
 
-        this.ctx.drawImage(this.cards, x, y, 60, 80, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
+        this.ctx.drawImage(this.cards, x, y, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
     }
 
     renderHand(cardIds) {
         const { x, y } = this.player_hand_center
 
-        const origin = x - (cardIds.length / 2 * (CARD_WIDTH))
+        const origin = x - (cardIds.length / 2 * (CARD_WIDTH + CARD_PADDING))
 
         for (const [i, id] of cardIds.entries()) {
-            this.renderCard(id, origin + (i * (CARD_WIDTH)), y)
+            this.renderCard(id, origin + (i * (CARD_WIDTH + CARD_PADDING)), y)
         }
     }
 
