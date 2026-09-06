@@ -10,79 +10,82 @@ const CARD_HEIGHT = 100
 const PADDING = 20
 const CARD_PADDING = 5
 
-const UPDATE_RATE = 1000 / 30 // 30 times per second
+const SOCKET_PORT = 5400
 
 class Game {
     constructor() {
-        this.canvas = canvas = document.getElementById("canvas");
-        this.ctx = canvas.getContext("2d");
+        this.canvas = document.getElementById("canvas");
+        this.ctx = this.canvas.getContext("2d");
 
-        this.running = false
-        this.lastTime = 0
-        this.accumulator = 0
+        this.running = false;
 
-        this.x = 0
-        this.y = 0
+        this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
+
+        this.socket.onopen = (event) => this.onSocketOpen(event);
+        this.socket.onmessage = (event) => this.onSocketMessage(event);
+        this.socket.onclose = (event) => this.onSocketClose(event);
+        this.socket.onerror = (event) => this.onSocketError(event);
+    }
+
+    async onSocketOpen(event) {
+        console.log("Connected");
+    }
+
+    async onSocketMessage(event) {
+        const state = JSON.parse(event.data);
+        this.state = state;
+    }
+
+    async onSocketClose(event) {
+        console.log("Disconnected");
+    }
+
+    async onSocketError(event) {
+        console.error(event);
     }
 
     async start() {
-        await this.init()
+        await this.init();
 
-        this.running = true
-        requestAnimationFrame((time) => this.gameLoop(time))
+        this.running = true;
+
+        requestAnimationFrame((time) => {
+            this.gameLoop(time);
+        });
     }
 
     async init() {
         const [cards] = await resources.load("/img/cards.png");
-        this.cards = cards
 
-        this.canvas.width = CANVAS_WIDTH
-        this.canvas.height = CANVAS_HEIGHT
+        this.cards = cards;
 
-        this.player_hand_center = { x: this.canvas.width / 2, y: this.canvas.height - CARD_HEIGHT - PADDING }
+        this.canvas.width = CANVAS_HEIGHT;
+        this.canvas.height = CANVAS_WIDTH;
+
+        this.player_hand_center = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height - 100 - 20
+        };
     }
 
-    async gameLoop(time) {
-        if (!this.running) return
-
-        if (!this.lastTime) {
-            this.lastTime = time
+    gameLoop(time) {
+        if (!this.running) {
+            return;
         }
 
-        let frameTime = time - this.lastTime
-        this.lastTime = time
+        this.render();
 
-        frameTime = Math.min(frameTime, 250)
-
-        this.accumulator += frameTime
-
-        while (this.accumulator >= UPDATE_RATE) {
-            this.update(UPDATE_RATE)
-            this.accumulator -= UPDATE_RATE
-        }
-
-        this.render()
-
-        requestAnimationFrame((time) => this.gameLoop(time))
+        requestAnimationFrame((time) => {
+            this.gameLoop(time);
+        });
     }
 
-    async update(dt) {
-        if (this.y % 2 == 0) {
-
-            this.x += 18
-        } else {
-            this.x -= 18
-        }
-
-        if (this.x > 800 | this.x < -100) {
-            this.y += 25
-        }
+    clearScreen() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    async render() {
+    render() {
         this.clearScreen()
-
-        this.renderHand(["red_j", "red_2", "red_3", "red_4", "red_5", "dragon"])
     }
 
     renderCard(id, pos_x, pos_y) {
@@ -105,10 +108,6 @@ class Game {
         for (const [i, id] of cardIds.entries()) {
             this.renderCard(id, origin + (i * (CARD_WIDTH + CARD_PADDING)), y)
         }
-    }
-
-    clearScreen() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
 
