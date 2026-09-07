@@ -9,6 +9,7 @@ const CARD_HEIGHT = 100
 
 const PADDING = 20
 const CARD_PADDING = 5
+const CARD_BORDER = 2
 
 const SOCKET_PORT = 5400
 
@@ -20,7 +21,7 @@ class Game {
         this.running = false;
         this.state = undefined;
 
-        this.selected_cards = [];
+        this.selected_cards = new Map();
 
         this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
 
@@ -86,7 +87,18 @@ class Game {
         const y = event.clientY - rect.top;
 
         const card = this.getCardAt(x, y);
-        console.log(card)
+
+        if (card) {
+            const { id } = card;
+
+            if (this.selected_cards.has(id)) {
+                this.selected_cards.delete(id)
+            } else {
+                this.selected_cards.set(id, CARD_MAP.get(id))
+            }
+        }
+
+        console.log(this.selected_cards)
     }
 
     gameLoop(time) {
@@ -138,6 +150,11 @@ class Game {
         return null;
     }
 
+    renderCardBorder(pos_x, pos_y) {
+        this.ctx.fillStyle = "yellow"
+        this.ctx.fillRect(pos_x - CARD_BORDER, pos_y - CARD_BORDER, CARD_WIDTH + CARD_BORDER, CARD_HEIGHT + CARD_BORDER)
+    }
+
     renderCard(id, pos_x, pos_y) {
         const card = CARD_MAP.get(id);
 
@@ -157,7 +174,14 @@ class Game {
         const { x, y } = this.getHandOrigin(hand)
 
         for (const [i, id] of hand.entries()) {
-            this.renderCard(id, x + (i * (CARD_WIDTH + CARD_PADDING)), y)
+            const pos_x = x + (i * (CARD_WIDTH + CARD_PADDING))
+            const pos_y = y
+
+            if (this.selected_cards.has(id)) {
+                this.renderCardBorder(pos_x, pos_y)
+            }
+
+            this.renderCard(id, pos_x, pos_y)
         }
     }
 

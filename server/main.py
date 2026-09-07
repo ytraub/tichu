@@ -55,8 +55,11 @@ class Game:
         while True:
             self.update(UPDATE_RATE)
 
-            for player in self.players:
-                await player.send_state(self.state())
+            for player in list(self.players):
+                try:
+                    await player.send_state(self.state())
+                except websockets.ConnectionClosed:
+                    self.players.discard(player)
 
             await asyncio.sleep(UPDATE_RATE)
 
