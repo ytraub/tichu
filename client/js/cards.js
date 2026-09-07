@@ -11,7 +11,7 @@ export class Card {
         }
     }
 
-    get_origin() {
+    getOrigin() {
         return this.origin
     }
 }

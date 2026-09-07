@@ -18,6 +18,9 @@ class Game {
         this.ctx = this.canvas.getContext("2d");
 
         this.running = false;
+        this.state = undefined;
+
+        this.selected_cards = [];
 
         this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
 
@@ -64,14 +67,30 @@ class Game {
 
         this.player_hand_center = {
             x: this.canvas.width / 2,
-            y: this.canvas.height - 100 - 20
+            y: this.canvas.height - 50 - PADDING
         };
+
+        this.initInput();
+    }
+
+    initInput() {
+        this.canvas.addEventListener("click", (event) => {
+            this.onCanvasClick(event);
+        });
+    }
+
+    onCanvasClick(event) {
+        const rect = this.canvas.getBoundingClientRect();
+
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const card = this.getCardAt(x, y);
+        console.log(card)
     }
 
     gameLoop(time) {
-        if (!this.running) {
-            return;
-        }
+        if (!this.running) return;
 
         this.render();
 
@@ -80,12 +99,43 @@ class Game {
         });
     }
 
-    clearScreen() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
     render() {
         this.clearScreen()
+
+        if (!this.state) return;
+
+        this.renderHand()
+    }
+
+    getHandOrigin(hand) {
+        const { x, y } = this.player_hand_center
+        return { x: x - (hand.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
+    }
+
+    getCardAt(mouseX, mouseY) {
+        if (!this.state) return
+
+        const hand = this.state.player.hand
+        const { x, y } = this.getHandOrigin(hand);
+
+        for (const [i, id] of hand.entries()) {
+            const cardX = x + (i * (CARD_WIDTH + CARD_PADDING));
+            const cardY = y;
+
+            if (
+                mouseX >= cardX &&
+                mouseX <= cardX + CARD_WIDTH &&
+                mouseY >= cardY &&
+                mouseY <= cardY + CARD_HEIGHT
+            ) {
+                return {
+                    id,
+                    index: i
+                };
+            }
+        }
+
+        return null;
     }
 
     renderCard(id, pos_x, pos_y) {
@@ -95,19 +145,24 @@ class Game {
             throw new Error(`Unknown card: ${id}`);
         }
 
-        const { x, y } = card.get_origin()
+        const { x, y } = card.getOrigin()
 
         this.ctx.drawImage(this.cards, x, y, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
     }
 
-    renderHand(cardIds) {
-        const { x, y } = this.player_hand_center
+    renderHand() {
+        if (!this.state) return
 
-        const origin = x - (cardIds.length / 2 * (CARD_WIDTH + CARD_PADDING))
+        const hand = this.state.player.hand
+        const { x, y } = this.getHandOrigin(hand)
 
-        for (const [i, id] of cardIds.entries()) {
-            this.renderCard(id, origin + (i * (CARD_WIDTH + CARD_PADDING)), y)
+        for (const [i, id] of hand.entries()) {
+            this.renderCard(id, x + (i * (CARD_WIDTH + CARD_PADDING)), y)
         }
+    }
+
+    clearScreen() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
 
