@@ -4,8 +4,8 @@ import { CARD_MAP, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT } from "./cards.js";
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 
-const CARD_WIDTH = 75
-const CARD_HEIGHT = 100
+const CARD_WIDTH = 37.5
+const CARD_HEIGHT = 50
 
 const PADDING = 20
 const CARD_PADDING = 5
