@@ -16,12 +16,16 @@ const SOCKET_PORT = 5400
 class Game {
     constructor() {
         this.canvas = document.getElementById("canvas");
+
+        this.playCardButton = document.getElementById("play_cards_btn");
+        this.playCardButton.onclick = (event) => this.onPlayCards(event);
+
         this.ctx = this.canvas.getContext("2d");
 
         this.running = false;
         this.state = undefined;
 
-        this.selected_cards = new Map();
+        this.selected_cards = new Set();
 
         this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
 
@@ -46,6 +50,14 @@ class Game {
 
     async onSocketError(event) {
         console.error(event);
+    }
+
+    async onPlayCards(event) {
+        const payload = {
+            "selected_cards": Array.from(this.selected_cards)
+        }
+        
+        this.socket.send(JSON.stringify(payload))
     }
 
     async start() {
@@ -94,7 +106,7 @@ class Game {
             if (this.selected_cards.has(id)) {
                 this.selected_cards.delete(id)
             } else {
-                this.selected_cards.set(id, CARD_MAP.get(id))
+                this.selected_cards.add(id, CARD_MAP.get(id))
             }
         }
 
@@ -150,6 +162,7 @@ class Game {
         return null;
     }
 
+    // Draw a yellow highlight behind the card
     renderCardBorder(pos_x, pos_y) {
         this.ctx.fillStyle = "yellow"
         this.ctx.fillRect(pos_x - CARD_BORDER, pos_y - CARD_BORDER, CARD_WIDTH + CARD_BORDER * 2, CARD_HEIGHT + CARD_BORDER * 2)

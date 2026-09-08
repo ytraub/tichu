@@ -1,19 +1,31 @@
 import asyncio
 import json
 import websockets
+import uuid
 
 from typing import Any
+from dataclasses import dataclass
 
 UPDATE_RATE = 1 / 30
 
 SOCKET_PORT = 5400
 
 
+@dataclass
+class Message:
+    player_id: str
+    payload: Any
+
+
 class Player:
     def __init__(self, client: websockets.ServerConnection) -> None:
         self.client = client
+        self.id = str(uuid.uuid4())
 
         self.hand = ["phoenix", "red_2", "black_6", "blue_7"]
+
+    def get_id(self) -> str:
+        return self.id
 
     async def send_state(self, game_state: Any) -> None:
         state = {"game": game_state, "player": self.state()}
@@ -27,9 +39,12 @@ class Game:
     def __init__(self):
         self.players: set[Player] = set()
         self.bots = set()
+    
+        self.message_queue: list[Message] = list()
 
     def update(self, dt):
-        pass
+        for message in self.message_queue:
+            pass
 
     def state(self):
         return {}
@@ -41,9 +56,9 @@ class Game:
         try:
             await player.send_state(self.state())
 
-            async for message in ws:
-                data = json.loads(message)
-                print("Client:", data)
+            async for payload in ws:
+                message = Message(player.get_id(), json.loads(payload))
+                self.message_queue.append(message)
 
         except websockets.ConnectionClosed:
             pass
