@@ -152,7 +152,7 @@ class Game {
 
     renderCardBorder(pos_x, pos_y) {
         this.ctx.fillStyle = "yellow"
-        this.ctx.fillRect(pos_x - CARD_BORDER, pos_y - CARD_BORDER, CARD_WIDTH + CARD_BORDER, CARD_HEIGHT + CARD_BORDER)
+        this.ctx.fillRect(pos_x - CARD_BORDER, pos_y - CARD_BORDER, CARD_WIDTH + CARD_BORDER * 2, CARD_HEIGHT + CARD_BORDER * 2)
     }
 
     renderCard(id, pos_x, pos_y) {
