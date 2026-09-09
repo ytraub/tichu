@@ -123,11 +123,22 @@ class Game {
     }
 
     gameLoop(time) {
+        this.update();
         this.render();
 
         requestAnimationFrame((time) => {
             this.gameLoop(time);
         });
+    }
+
+    update() {
+        if (this.isRunning) {
+            this.startGameButton.disabled = true;
+            this.playCardButton.disabled = false;
+        } else {
+            this.startGameButton.disabled = false;
+            this.playCardButton.disabled = true;
+        }
     }
 
     render() {
