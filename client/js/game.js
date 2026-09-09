@@ -4,8 +4,8 @@ import { CARD_MAP, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT } from "./cards.js";
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 
-const CARD_WIDTH = 37.5
-const CARD_HEIGHT = 50
+const CARD_WIDTH = 60
+const CARD_HEIGHT = 80
 
 const PADDING = 20
 const CARD_PADDING = 5
@@ -17,13 +17,17 @@ class Game {
     constructor() {
         this.canvas = document.getElementById("canvas");
 
+        this.startGameButton = document.getElementById("start_game_btn");
+        this.startGameButton.onclick = (event) => this.startGame(event);
+
         this.playCardButton = document.getElementById("play_cards_btn");
         this.playCardButton.onclick = (event) => this.onPlayCards(event);
 
         this.ctx = this.canvas.getContext("2d");
 
-        this.running = false;
         this.state = undefined;
+        this.isRunning = false;
+        this.hand = undefined;
 
         this.selected_cards = new Set();
 
@@ -42,6 +46,9 @@ class Game {
     async onSocketMessage(event) {
         const state = JSON.parse(event.data);
         this.state = state;
+
+        this.hand = state.player.hand;
+        this.isRunning = state.game.is_running;
     }
 
     async onSocketClose(event) {
@@ -56,18 +63,12 @@ class Game {
         const payload = {
             "selected_cards": Array.from(this.selected_cards)
         }
-        
+
         this.socket.send(JSON.stringify(payload))
     }
 
-    async start() {
-        await this.init();
+    async startGame(event) {
 
-        this.running = true;
-
-        requestAnimationFrame((time) => {
-            this.gameLoop(time);
-        });
     }
 
     async init() {
@@ -84,6 +85,10 @@ class Game {
         };
 
         this.initInput();
+
+        requestAnimationFrame((time) => {
+            this.gameLoop(time);
+        });
     }
 
     initInput() {
@@ -114,7 +119,7 @@ class Game {
     }
 
     gameLoop(time) {
-        if (!this.running) return;
+        if (!this.isRunning) return;
 
         this.render();
 
@@ -139,8 +144,7 @@ class Game {
     getCardAt(mouseX, mouseY) {
         if (!this.state) return
 
-        const hand = this.state.player.hand
-        const { x, y } = this.getHandOrigin(hand);
+        const { x, y } = this.getHandOrigin(this.hand);
 
         for (const [i, id] of hand.entries()) {
             const cardX = x + (i * (CARD_WIDTH + CARD_PADDING));
@@ -183,8 +187,7 @@ class Game {
     renderHand() {
         if (!this.state) return
 
-        const hand = this.state.player.hand
-        const { x, y } = this.getHandOrigin(hand)
+        const { x, y } = this.getHandOrigin(this.hand)
 
         for (const [i, id] of hand.entries()) {
             const pos_x = x + (i * (CARD_WIDTH + CARD_PADDING))
@@ -205,6 +208,6 @@ class Game {
 
 (async () => {
     let game = new Game()
-    game.start()
+    game.init()
 })()
 

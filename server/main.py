@@ -11,7 +11,9 @@ from cards import Card, CARD_MAP
 
 UPDATE_RATE = 1 / 30
 SOCKET_PORT = 5400
-PLAYER_AMOUNT = 4
+
+MIN_PLAYERS = 1
+MAX_PLAYERS = 4
 
 
 @dataclass
@@ -24,9 +26,13 @@ class Message:
 class Entity:
     id: str
     hand: list[str]
+    ready: bool = False
 
     def get_id(self) -> str:
         return self.id
+
+    def get_ready(self) -> bool:
+        return self.ready
 
     def get_state(self) -> dict[str, Any]:
         return {"hand": self.hand}
@@ -56,6 +62,7 @@ class Player(Entity):
 class Bot(Entity):
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())
+        self.ready = True
 
     async def send_state(self, game_state: Any) -> None:
         return await super().send_state(game_state)
@@ -66,13 +73,24 @@ class Game:
         self.entities: list[Entity] = list()
 
         self.message_queue: list[Message] = list()
+        self.is_running: bool = False
 
     def update(self, dt) -> None:
         for message in self.message_queue:
             pass
 
     def state(self) -> Any:
-        return {}
+        return {"is_running": self.is_running}
+
+    def get_entities_amount(self) -> int:
+        return len(self.entities)
+
+    def get_entities_ready(self) -> bool:
+        for entity in self.entities:
+            if not entity.get_ready():
+                return False
+
+        return True
 
     async def client_handler(self, ws: websockets.ServerConnection) -> None:
         player = Player(ws)
@@ -92,17 +110,28 @@ class Game:
             self.entities.remove(player)
 
     async def start(self) -> None:
-        print("sleeping")
-        await asyncio.sleep(5)
-        print("start")
-        
+        def is_game_ready() -> bool:
+            return (
+                self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
+            )
+
+        # Wait for players and start when they are ready
+        while not is_game_ready():
+            await asyncio.sleep(0.1)
+
         self.init_bots()
         self.deal_cards()
+        
+        print("Starting")
 
+        self.is_running = True
         await self.game_loop()
 
+        # start new game
+        await self.start()
+
     async def game_loop(self) -> None:
-        while True:
+        while self.is_running:
             self.update(UPDATE_RATE)
 
             for entity in list(self.entities):
@@ -114,20 +143,17 @@ class Game:
             await asyncio.sleep(UPDATE_RATE)
 
     def init_bots(self) -> None:
-        print(self.entities)
-        for _ in range(min(PLAYER_AMOUNT - len(self.entities), 4)):
+        for _ in range(MAX_PLAYERS - self.get_entities_amount()):
             self.entities.append(Bot())
 
     def deal_cards(self) -> None:
         shuffled = list(CARD_MAP)
         random.shuffle(shuffled)
 
-        hand_size = len(shuffled) // PLAYER_AMOUNT
+        hand_size = len(shuffled) // MAX_PLAYERS
         hands = [
             shuffled[i : i + hand_size] for i in range(0, len(shuffled), hand_size)
         ]
-        
-        print(len(hands), len(self.entities))
 
         for i, entity in enumerate(self.entities):
             entity.set_hand(hands[i])
@@ -140,7 +166,7 @@ async def main():
         game.client_handler,
         "localhost",
         SOCKET_PORT,
-    ):  
+    ):
         await game.start()
 
 
