@@ -4,6 +4,8 @@ import websockets
 import uuid
 import random
 
+import logging
+
 from typing import Any
 from dataclasses import dataclass
 
@@ -15,10 +17,18 @@ SOCKET_PORT = 5400
 MIN_PLAYERS = 1
 MAX_PLAYERS = 4
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="server.log",
+    level=logging.INFO,
+    filemode="w",
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
 
 @dataclass
 class Message:
-    player_id: str
+    entity_id: str
     payload: Any
 
 
@@ -37,7 +47,10 @@ class Entity:
     def get_state(self) -> dict[str, Any]:
         return {"hand": self.hand}
 
-    def set_hand(self, cardIds: list[str]) -> Any:
+    def set_ready(self, state: bool) -> None:
+        self.ready = state
+
+    def set_hand(self, cardIds: list[str]) -> None:
         self.hand = cardIds
 
     async def send_state(self, game_state: Any) -> None:
@@ -75,9 +88,34 @@ class Game:
         self.message_queue: list[Message] = list()
         self.is_running: bool = False
 
-    def update(self, dt) -> None:
+    def get_entity_by_id(self, id: str) -> Entity | None:
+        for entity in self.entities:
+            if entity.id == id:
+                return entity
+
+        return None
+
+    async def handle_lobby_messages(self) -> None:
+        if not len(self.message_queue):
+            return
+
+        message = self.message_queue.pop(0)
+
+        entity = self.get_entity_by_id(message.entity_id)
+
+        if not entity:
+            return
+
+        if message.payload.get("ready"):
+            logger.info(f"{entity.get_id()} is ready")
+            entity.set_ready(message.payload.get("ready"))
+
+    def handle_game_messages(self) -> None:
         for message in self.message_queue:
             pass
+
+    def update(self, dt) -> None:
+        pass
 
     def state(self) -> Any:
         return {"is_running": self.is_running}
@@ -96,11 +134,17 @@ class Game:
         player = Player(ws)
         self.entities.append(player)
 
+        logger.info(f"{player.get_id()} connected")
+
         try:
             await player.send_state(self.state())
 
             async for payload in ws:
-                message = Message(player.get_id(), json.loads(payload))
+                decoded = json.loads(payload)
+                message = Message(player.get_id(), decoded)
+
+                logger.debug("Recived:\n", message)
+
                 self.message_queue.append(message)
 
         except websockets.ConnectionClosed:
@@ -111,18 +155,21 @@ class Game:
 
     async def start(self) -> None:
         def is_game_ready() -> bool:
+            # print(self.get_entities_amount(), MIN_PLAYERS, self.get_entities_ready())
             return (
                 self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
             )
 
         # Wait for players and start when they are ready
+        logger.info("Waiting for players...")
         while not is_game_ready():
+            await self.handle_lobby_messages()
             await asyncio.sleep(0.1)
 
         self.init_bots()
         self.deal_cards()
-        
-        print("Starting")
+
+        logger.info("Starting...")
 
         self.is_running = True
         await self.game_loop()
@@ -170,4 +217,5 @@ async def main():
         await game.start()
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,0 +1,8 @@
+2026-09-09 15:48:40,748 - INFO - server listening on [::1]:5400
+2026-09-09 15:48:40,748 - INFO - server listening on 127.0.0.1:5400
+2026-09-09 15:48:40,748 - INFO - Waiting for players...
+2026-09-09 15:48:44,828 - INFO - connection open
+2026-09-09 15:48:44,828 - INFO - b9a5b49d-1d78-4520-9a6c-bf1dbc54857b connected
+2026-09-09 15:48:47,179 - INFO - connection closed
+2026-09-09 15:48:47,328 - INFO - connection open
+2026-09-09 15:48:47,328 - INFO - d786bab0-7295-4f66-b775-e0a3b689f39c connected

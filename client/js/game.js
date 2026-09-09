@@ -4,8 +4,8 @@ import { CARD_MAP, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT } from "./cards.js";
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 
-const CARD_WIDTH = 60
-const CARD_HEIGHT = 80
+const CARD_WIDTH = 48
+const CARD_HEIGHT = 64
 
 const PADDING = 20
 const CARD_PADDING = 5
@@ -68,7 +68,11 @@ class Game {
     }
 
     async startGame(event) {
+        const payload = {
+            "ready": true
+        }
 
+        this.socket.send(JSON.stringify(payload))
     }
 
     async init() {
@@ -119,8 +123,6 @@ class Game {
     }
 
     gameLoop(time) {
-        if (!this.isRunning) return;
-
         this.render();
 
         requestAnimationFrame((time) => {
@@ -146,7 +148,7 @@ class Game {
 
         const { x, y } = this.getHandOrigin(this.hand);
 
-        for (const [i, id] of hand.entries()) {
+        for (const [i, id] of this.hand.entries()) {
             const cardX = x + (i * (CARD_WIDTH + CARD_PADDING));
             const cardY = y;
 
@@ -189,7 +191,7 @@ class Game {
 
         const { x, y } = this.getHandOrigin(this.hand)
 
-        for (const [i, id] of hand.entries()) {
+        for (const [i, id] of this.hand.entries()) {
             const pos_x = x + (i * (CARD_WIDTH + CARD_PADDING))
             const pos_y = y
 
