@@ -22,7 +22,7 @@ class Game {
 
         this.playCardButton = document.getElementById("play_cards_btn");
         this.playCardButton.onclick = (event) => this.onPlayCards(event);
-
+            
         this.ctx = this.canvas.getContext("2d");
 
         this.state = undefined;

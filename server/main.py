@@ -140,10 +140,11 @@ class Game:
             await player.send_state(self.state())
 
             async for payload in ws:
+                logger.info(f"Recived: {payload}")
+                
+                
                 decoded = json.loads(payload)
                 message = Message(player.get_id(), decoded)
-
-                logger.debug("Recived:\n", message)
 
                 self.message_queue.append(message)
 

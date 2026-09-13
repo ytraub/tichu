@@ -1,8 +1,16 @@
-2026-09-09 15:48:40,748 - INFO - server listening on [::1]:5400
-2026-09-09 15:48:40,748 - INFO - server listening on 127.0.0.1:5400
-2026-09-09 15:48:40,748 - INFO - Waiting for players...
-2026-09-09 15:48:44,828 - INFO - connection open
-2026-09-09 15:48:44,828 - INFO - b9a5b49d-1d78-4520-9a6c-bf1dbc54857b connected
-2026-09-09 15:48:47,179 - INFO - connection closed
-2026-09-09 15:48:47,328 - INFO - connection open
-2026-09-09 15:48:47,328 - INFO - d786bab0-7295-4f66-b775-e0a3b689f39c connected
+2026-09-13 19:03:47,355 - INFO - server listening on [::1]:5400
+2026-09-13 19:03:47,355 - INFO - server listening on 127.0.0.1:5400
+2026-09-13 19:03:47,355 - INFO - Waiting for players...
+2026-09-13 19:03:48,697 - INFO - connection open
+2026-09-13 19:03:48,697 - INFO - 363b6142-5cf7-4066-b7d8-8284fc3a0fea connected
+2026-09-13 19:03:50,417 - INFO - fRecived: {"ready":true}
+2026-09-13 19:03:50,510 - INFO - 363b6142-5cf7-4066-b7d8-8284fc3a0fea is ready
+2026-09-13 19:03:50,619 - INFO - Starting...
+2026-09-13 19:03:52,024 - INFO - fRecived: {"selected_cards":["dragon"]}
+2026-09-13 19:04:18,008 - INFO - fRecived: {"selected_cards":["dragon","blue_7","red_10","black_q"]}
+2026-09-13 19:04:20,011 - INFO - fRecived: {"selected_cards":["dragon","blue_7","red_10","black_q"]}
+2026-09-13 19:04:22,420 - INFO - fRecived: {"selected_cards":["dragon","blue_7","red_10","black_q"]}
+2026-09-13 19:04:31,062 - INFO - fRecived: {"selected_cards":["green_7"]}
+2026-09-13 19:04:44,948 - INFO - server closing
+2026-09-13 19:04:44,950 - INFO - connection closed
+2026-09-13 19:04:44,950 - INFO - server closed
