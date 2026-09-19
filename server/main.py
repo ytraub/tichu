@@ -45,7 +45,7 @@ class Entity:
         return self.ready
 
     def get_state(self) -> dict[str, Any]:
-        return {"hand": self.hand}
+        return {"id": self.id, "hand": self.hand}
 
     def set_ready(self, state: bool) -> None:
         self.ready = state
@@ -83,17 +83,53 @@ class Bot(Entity):
 
 class Game:
     def __init__(self) -> None:
-        self.entities: list[Entity] = list()
+        self.teams: dict[str, dict[str, Entity | None]] = {
+            "a": {"a": None, "b": None},
+            "b": {"a": None, "b": None},
+        }
 
         self.message_queue: list[Message] = list()
         self.is_running: bool = False
 
+        self.entity_turn_id = None
+
+    def get_entity_list(self) -> list[Entity]:
+        return [
+            entity
+            for team in self.teams.values()
+            for entity in team.values()
+            if entity is not None
+        ]
+
     def get_entity_by_id(self, id: str) -> Entity | None:
-        for entity in self.entities:
+        for entity in self.get_entity_list():
             if entity.id == id:
                 return entity
 
         return None
+
+    def get_entities_amount(self) -> int:
+        return len(self.get_entity_list())
+
+    def get_entities_ready(self) -> bool:
+        for entity in self.get_entity_list():
+            if not entity.get_ready():
+                return False
+
+        return True
+
+    def add_entity(self, entity: Entity) -> None:
+        for team in self.teams.values():
+            for slot in team:
+                if team[slot] is None:
+                    team[slot] = entity
+                    return
+
+    def remove_entity(self, entity: Entity) -> None:
+        for team in self.teams.values():
+            for slot, value in team.items():
+                if value is entity:
+                    team[slot] = None
 
     async def handle_lobby_messages(self) -> None:
         if not len(self.message_queue):
@@ -118,21 +154,14 @@ class Game:
         pass
 
     def state(self) -> Any:
-        return {"is_running": self.is_running}
-
-    def get_entities_amount(self) -> int:
-        return len(self.entities)
-
-    def get_entities_ready(self) -> bool:
-        for entity in self.entities:
-            if not entity.get_ready():
-                return False
-
-        return True
+        return {
+            "is_running": self.is_running,
+            "entity_turn_id": self.entity_turn_id,
+        }
 
     async def client_handler(self, ws: websockets.ServerConnection) -> None:
         player = Player(ws)
-        self.entities.append(player)
+        self.add_entity(player)
 
         logger.info(f"{player.get_id()} connected")
 
@@ -141,8 +170,7 @@ class Game:
 
             async for payload in ws:
                 logger.info(f"Recived: {payload}")
-                
-                
+
                 decoded = json.loads(payload)
                 message = Message(player.get_id(), decoded)
 
@@ -152,11 +180,10 @@ class Game:
             pass
 
         finally:
-            self.entities.remove(player)
+            self.remove_entity(player)
 
     async def start(self) -> None:
         def is_game_ready() -> bool:
-            # print(self.get_entities_amount(), MIN_PLAYERS, self.get_entities_ready())
             return (
                 self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
             )
@@ -182,17 +209,17 @@ class Game:
         while self.is_running:
             self.update(UPDATE_RATE)
 
-            for entity in list(self.entities):
+            for entity in self.get_entity_list():
                 try:
                     await entity.send_state(self.state())
                 except websockets.ConnectionClosed:
-                    self.entities.remove(entity)
+                    self.remove_entity(entity)
 
             await asyncio.sleep(UPDATE_RATE)
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
-            self.entities.append(Bot())
+            self.add_entity(Bot())
 
     def deal_cards(self) -> None:
         shuffled = list(CARD_MAP)
@@ -203,8 +230,10 @@ class Game:
             shuffled[i : i + hand_size] for i in range(0, len(shuffled), hand_size)
         ]
 
-        for i, entity in enumerate(self.entities):
+        for i, entity in enumerate(self.get_entity_list()):
             entity.set_hand(hands[i])
+            
+        print(self.teams)
 
 
 async def main():
