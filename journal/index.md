@@ -7,8 +7,8 @@ title: Arbeitsjournal
 
 ## Projekt
 
-**Arbeitstitel:** Meine Projektarbeit  
-**Team:** Elena, Tim, Adrian  
+**Arbeitstitel:** Tichu Bot
+**Team:** Jakub, Luka, Yaron
 **Betreuung:** ...
 
 ### Projektidee
