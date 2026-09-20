@@ -5,22 +5,23 @@ title: Arbeitsjournal
 
 # Arbeitsjournal
 
-Willkommen zu meinem Arbeitsjournal für unser PU-Projekt.
-
 ## Projekt
 
-[Projektidee](project.md)
+**Arbeitstitel:** Meine Projektarbeit  
+**Team:** Elena, Tim, Adrian  
+**Betreuung:** ...
 
-[Fragestellung](research-question.md)
+### Projektidee
 
-[Projektplanung](planning.md)
+Kurze Beschreibung des Projekts und der Fragestellung.
 
-## Arbeitswochen
+## Navigation
 
-- [Woche 1](weeks/week-01.md)
-- [Woche 2](weeks/week-02.md)
-- [Woche 3](weeks/week-03.md)
+- [Projektidee](projektidee)
+- [Rechercheprotokoll](rechercheprotokoll)
+- [Literatur](literatur)
+- [Dokumente](dokumente)
 
-## Recherche
+## Arbeitsjournal
 
-[Rechercheprotokoll](research.md)
+Die neuesten Wochenberichte erscheinen unten.
