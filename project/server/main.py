@@ -186,7 +186,7 @@ class Game:
     def handle_game_messages(self) -> None:
         for message in self.message_queue:
             pass
-        
+
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
             self.add_entity(Bot())
@@ -225,8 +225,7 @@ class Game:
 
         # start new game
         await self.start()
-        
-    
+
     def update(self, dt) -> None:
         pass
 
@@ -251,6 +250,7 @@ async def main():
         "localhost",
         SOCKET_PORT,
     ):
+        print("Server listening on port", SOCKET_PORT)
         await game.start()
 
 

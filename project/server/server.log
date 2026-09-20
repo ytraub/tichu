@@ -1,0 +1,11 @@
+2026-09-20 19:08:27,454 - INFO - server listening on 127.0.0.1:5400
+2026-09-20 19:08:27,454 - INFO - server listening on [::1]:5400
+2026-09-20 19:08:27,454 - INFO - Waiting for players...
+2026-09-20 19:08:31,850 - INFO - connection open
+2026-09-20 19:08:31,851 - INFO - 2b2d73b2-6b39-44b2-8d29-4ed226c9641e connected
+2026-09-20 19:08:33,415 - INFO - Recived: {"ready":true}
+2026-09-20 19:08:33,456 - INFO - 2b2d73b2-6b39-44b2-8d29-4ed226c9641e is ready
+2026-09-20 19:08:33,564 - INFO - Starting...
+2026-09-20 19:08:36,144 - INFO - server closing
+2026-09-20 19:08:36,146 - INFO - connection closed
+2026-09-20 19:08:36,146 - INFO - server closed
