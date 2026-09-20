@@ -5,7 +5,7 @@ title: Arbeitsjournal
 
 # Arbeitsjournal
 
-Willkommen zu meinem Arbeitsjournal für die Maturitätsarbeit.
+Willkommen zu meinem Arbeitsjournal für unser PU-Projekt.
 
 ## Projekt
 
