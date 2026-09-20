@@ -22,12 +22,17 @@ class Game {
 
         this.playCardButton = document.getElementById("play_cards_btn");
         this.playCardButton.onclick = (event) => this.onPlayCards(event);
-            
+
+        this.teamsDebug = document.getElementById("teams_debug")
+        this.entityTurnIdDebug = document.getElementById("entity_turn_id_debug")
+
         this.ctx = this.canvas.getContext("2d");
 
         this.state = undefined;
         this.isRunning = false;
         this.hand = undefined;
+        this.teams = undefined;
+        this.entityTurnId = undefined;
 
         this.selected_cards = new Set();
 
@@ -49,6 +54,8 @@ class Game {
 
         this.hand = state.player.hand;
         this.isRunning = state.game.is_running;
+        this.teams = state.game.teams;
+        this.entityTurnId = state.game.entity_turn_id;
     }
 
     async onSocketClose(event) {
@@ -73,6 +80,17 @@ class Game {
         }
 
         this.socket.send(JSON.stringify(payload))
+    }
+
+    debug() {
+        const { a, b } = this.teams;
+
+        this.teamsDebug.innerText =
+            `Team A: ${JSON.stringify(a, null, 2)}\n` +
+            `Team B: ${JSON.stringify(b, null, 2)}`;
+
+
+        this.entityTurnIdDebug.innerText = this.entityTurnId;
     }
 
     async init() {
@@ -147,6 +165,7 @@ class Game {
         if (!this.state) return;
 
         this.renderHand()
+        this.debug()
     }
 
     getHandOrigin(hand) {

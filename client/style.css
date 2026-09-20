@@ -22,9 +22,21 @@ canvas {
     box-sizing: border-box;
 
     display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 2rem;
+}
+
+.game {
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+.debug {
+    height: 100%;
 }
 
 .action_bar {
