@@ -1,0 +1,53 @@
+name: Deploy Journal
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+
+      - name: Install Jekyll
+        run: |
+          gem install jekyll bundler
+          cd journal
+          bundle init
+          bundle add jekyll
+          bundle add minima
+
+      - name: Build site
+        run: |
+          cd journal
+          bundle exec jekyll build --destination ../_site
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "_site"
+
+      - name: Deploy
+        uses: actions/deploy-pages@v4
