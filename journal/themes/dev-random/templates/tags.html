@@ -14,11 +14,11 @@
     </script>
 {% endblock headers %}
 
-{% block title %}{{ super() }} — Mots-clés{% endblock title %}
+{% block title %}{{ super() }} — Schlüsselwörter{% endblock title %}
 
 {%- block content %}
     <section class="content">
-      <h1>Mots-clés</h1>
+      <h1>Schlüsselwörter</h1>
       <ul id="tagslist">
       {% for tag, articles in tags %}
       <li data-count="{{ articles|count }}"><a href="{{ SITEURL }}/{{ tag.url }}">{{ tag }}</a></li>
