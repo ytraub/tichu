@@ -18,7 +18,7 @@
       </h1>
       <div class="meta">
         In «<a href="{{ SITEURL }}/{{ article.category.url }}">{{ article.category }}</a>»
-        von <a href="{{ SITEURL }}/{{ article.author.url }}">{{ article.author }}</a>
+        von {% for author in article.authors %} <a href="{{ SITEURL }}/{{ author.url }}">{{ author }}</a>{% endfor %}
         {% if article.translations %}
         &nbsp;&nbsp; Langues:
         <a href="{{ SITEURL }}/{{ article.url }}">{{ article.lang or DEFAULT_LANG }}</a>
