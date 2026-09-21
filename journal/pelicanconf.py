@@ -35,3 +35,7 @@ DEFAULT_PAGINATION = False
 # RELATIVE_URLS = True
 
 THEME = "./themes/dev-random"
+
+
+SITEURL = ''
+RELATIVE_URLS = True
