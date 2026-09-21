@@ -1,9 +1,8 @@
 Title: Projektidee
 Date: 2026-09-21
-Author: Max Muster
-Slug: projektidee
-
-# Unsere Projektidee
+Author: Jakub, Luka, Yaron
+Tags: Projektidee
+Slug: idea
 
 ## Thema
 

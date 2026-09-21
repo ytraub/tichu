@@ -1,10 +1,9 @@
-Title: Rechercheprotokoll
+Title: Quellen
 Date: 2026-09-21
-Author: Max Muster
+Author: Jakub, Luka, Yaron
 Category: Recherche
 Tags: Recherche, Quellen
-
-# Rechercheprotokoll
+Slug: sources
 
 Dieses Dokument wird während des gesamten Projekts laufend ergänzt.
 

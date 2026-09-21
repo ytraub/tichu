@@ -4,12 +4,9 @@ PELICANOPTS=
 
 BASEDIR=$(CURDIR)
 INPUTDIR=$(BASEDIR)/content
-OUTPUTDIR=$(BASEDIR)/output
+OUTPUTDIR=$(BASEDIR)/_output
 CONFFILE=$(BASEDIR)/pelicanconf.py
 PUBLISHCONF=$(BASEDIR)/publishconf.py
-
-GITHUB_PAGES_BRANCH=gh-pages
-GITHUB_PAGES_COMMIT_MESSAGE=Generate Pelican site
 
 
 DEBUG ?= 0
@@ -73,4 +70,4 @@ publish:
 	"$(PELICAN)" "$(INPUTDIR)" -o "$(OUTPUTDIR)" -s "$(PUBLISHCONF)" $(PELICANOPTS)
 
 
-.PHONY: html help clean regenerate serve serve-global devserver devserver-global publish github
+.PHONY: html help clean regenerate serve serve-global devserver devserver-global publish
