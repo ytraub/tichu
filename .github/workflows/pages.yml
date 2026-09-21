@@ -3,6 +3,8 @@ name: Deploy Journal
 on:
   push:
     branches: ["master"]
+    paths:
+      - "journal/**"
   workflow_dispatch:
 
 permissions:
@@ -22,24 +24,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          ruby-version: "3.3"
-          bundler-cache: false
+          python-version: "3.12"
 
-      - name: Install Jekyll
+      - name: Install dependencies
+        working-directory: journal
         run: |
-          gem install jekyll bundler
-          cd journal
-          bundle init
-          bundle add jekyll
-          bundle add minima
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Build site
+      - name: Build Pelican site
+        working-directory: journal
         run: |
-          cd journal
-          bundle exec jekyll build --destination ../_site
+          pelican content -s pelicanconf.py -o ../_site
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
