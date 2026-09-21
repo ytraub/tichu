@@ -3,7 +3,7 @@
 
 {% block headers %}
 {{ super() }}
-<meta name="author" content="{{ article.author }}" />
+<meta name="authors" content="{{ article.authors }}" />
 <meta name="keywords" content="{{ article.tags|join(', ') }}" />
 {% endblock %}
 

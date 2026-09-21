@@ -1,5 +1,5 @@
 AUTHOR = 'Jakub, Luka and Yaron'
-SITENAME = 'projektjournal'
+SITENAME = 'Projektjournal Tichu Bot'
 SITEURL = ""
 
 PATH = "content"
