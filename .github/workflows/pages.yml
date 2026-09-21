@@ -37,6 +37,7 @@ jobs:
       - name: Build Pelican site
         working-directory: journal
         run: |
+          rm -rf ../_site
           pelican content -s publishconf.py -o ../_site
 
       - name: Setup Pages
