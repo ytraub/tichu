@@ -26,6 +26,10 @@ logging.basicConfig(
 )
 
 
+class InvalidTurn(Exception):
+    pass
+
+
 @dataclass
 class Message:
     entity_id: str
@@ -100,6 +104,7 @@ class Game:
 
         self.entity_turn_id = None
         self.turn_count = 0
+        self.discard_pile = []
 
     # Must be JSON serializable
     def state(self) -> Any:
@@ -107,6 +112,7 @@ class Game:
             "is_running": self.is_running,
             "entity_turn_id": self.entity_turn_id,
             "teams": self.teams,
+            "discard_pile": self.discard_pile,
         }
 
     def get_entity_by_id(self, id: str) -> Entity | None:
@@ -155,7 +161,7 @@ class Game:
             self.entities.remove(entity)
         except ValueError:
             pass
-        
+
         self.remove_entity_from_team(entity.id)
 
     async def client_handler(self, ws: websockets.ServerConnection) -> None:
@@ -195,9 +201,35 @@ class Game:
             logger.info(f"{entity.get_id()} is ready")
             entity.set_ready(message.payload.get("ready"))
 
-    def handle_game_messages(self) -> None:
-        for message in self.message_queue:
-            pass
+    def try_play_cards(self, entity: Entity, cards: list[str]) -> None:
+        for card in cards:
+            if not card in entity.hand:
+                raise InvalidTurn
+
+            entity.hand.remove(card)
+
+    async def handle_game_messages(self) -> None:
+        if not len(self.message_queue):
+            return
+
+        message = self.message_queue.pop(0)
+        entity = self.get_entity_by_id(message.entity_id)
+
+        if not entity:
+            return
+
+        if message.payload.get("selected_cards"):
+            selected_cards = message.payload["selected_cards"]
+
+            try:
+                self.try_play_cards(entity, selected_cards)
+            except InvalidTurn:
+                return
+
+            self.discard_pile = selected_cards
+
+            # Go to the next player
+            self.set_next_entity_turn_id()
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
@@ -216,8 +248,9 @@ class Game:
             entity.set_hand(hands[i])
 
     def reset(self) -> None:
-        self.turn_count = 0
         self.entity_turn_id = None
+        self.turn_count = 0
+        self.discard_pile = []
 
     async def start(self) -> None:
         self.reset()
@@ -244,14 +277,14 @@ class Game:
         # start new game
         await self.start()
 
-    def update(self, dt) -> None:
-        pass
+    async def update(self, dt) -> None:
+        await self.handle_game_messages()
 
     async def game_loop(self) -> None:
         self.set_next_entity_turn_id()
 
         while self.is_running:
-            self.update(UPDATE_RATE)
+            await self.update(UPDATE_RATE)
 
             for entity in self.entities:
                 try:

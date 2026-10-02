@@ -29,8 +29,10 @@ class Game {
         this.ctx = this.canvas.getContext("2d");
 
         this.state = undefined;
-        this.isRunning = false;
         this.hand = undefined;
+        this.id = undefined;
+        
+        this.isRunning = false;
         this.teams = undefined;
         this.entityTurnId = undefined;
 
@@ -53,6 +55,8 @@ class Game {
         this.state = state;
 
         this.hand = state.player.hand;
+        this.id = state.player.id;
+
         this.isRunning = state.game.is_running;
         this.teams = state.game.teams;
         this.entityTurnId = state.game.entity_turn_id;
@@ -150,13 +154,8 @@ class Game {
     }
 
     update() {
-        if (this.isRunning) {
-            this.startGameButton.disabled = true;
-            this.playCardButton.disabled = false;
-        } else {
-            this.startGameButton.disabled = false;
-            this.playCardButton.disabled = true;
-        }
+        this.startGameButton.disabled = this.isRunning;
+        this.playCardButton.disabled = this.id !== this.entityTurnId
     }
 
     render() {
