@@ -7,3 +7,6 @@
 2026-10-02 21:54:23,477 - INFO - b1018d99-5ac9-4b0a-a474-ecf65c6e487e is ready
 2026-10-02 21:54:23,586 - INFO - Starting...
 2026-10-02 21:54:25,204 - INFO - Recived: {"selected_cards":["black_8"]}
+2026-10-02 22:58:40,802 - INFO - server closing
+2026-10-02 22:58:40,804 - INFO - connection closed
+2026-10-02 22:58:40,804 - INFO - server closed

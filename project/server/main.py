@@ -10,6 +10,8 @@ from typing import Any
 from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
+from combinations import card_ids_to_combination
+from utils import CardsNotOnHandException, InvalidCombinationException
 
 UPDATE_RATE = 1 / 30
 SOCKET_PORT = 5400
@@ -24,14 +26,6 @@ logging.basicConfig(
     filemode="w",
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
-
-
-class CardsNotOnHandException(Exception):
-    pass
-
-
-class InvalidCombinationException(Exception):
-    pass
 
 
 @dataclass
@@ -205,10 +199,10 @@ class Game:
             logger.info(f"{entity.get_id()} is ready")
             entity.set_ready(message.payload.get("ready"))
 
-    def try_play_cards(self, entity: Entity, cards: list[str]) -> None:
+    def try_play_cards(self, entity: Entity, card_ids: list[str]) -> None:
 
-        # Now check if player actually has these cards
-        for card in cards:
+        # Now check if player actually has these card_ids
+        for card in card_ids:
             if not card in entity.hand:
                 raise CardsNotOnHandException
 
@@ -225,16 +219,16 @@ class Game:
             return
 
         if message.payload.get("selected_cards"):
-            selected_cards = message.payload["selected_cards"]
+            selected_card_ids = message.payload["selected_cards"]
 
             try:
-                self.try_play_cards(entity, selected_cards)
+                self.try_play_cards(entity, selected_card_ids)
             except InvalidCombinationException:
                 return
             except CardsNotOnHandException:
                 return
 
-            self.discard_pile = selected_cards
+            self.discard_pile = selected_card_ids
 
             # Go to the next player
             self.set_next_entity_turn_id()
