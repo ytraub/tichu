@@ -99,6 +99,7 @@ class Game:
         self.is_running: bool = False
 
         self.entity_turn_id = None
+        self.turn_count = 0
 
     # Must be JSON serializable
     def state(self) -> Any:
@@ -125,6 +126,13 @@ class Game:
 
         return True
 
+    def set_next_entity_turn_id(self) -> None:
+        team = "a" if self.turn_count % 2 == 0 else "b"
+        entity = "a" if self.turn_count % 4 < 2 else "b"
+
+        self.entity_turn_id = self.teams[team][entity]
+        self.turn_count += 1
+
     def add_entity_to_team(self, entity_id: str) -> None:
         for team in self.teams.values():
             for slot in team:
@@ -143,7 +151,11 @@ class Game:
                     team[slot] = None
 
     def remove_entity(self, entity: Entity) -> None:
-        self.entities.remove(entity)
+        try:
+            self.entities.remove(entity)
+        except ValueError:
+            pass
+        
         self.remove_entity_from_team(entity.id)
 
     async def client_handler(self, ws: websockets.ServerConnection) -> None:
@@ -203,7 +215,13 @@ class Game:
         for i, entity in enumerate(self.entities):
             entity.set_hand(hands[i])
 
+    def reset(self) -> None:
+        self.turn_count = 0
+        self.entity_turn_id = None
+
     async def start(self) -> None:
+        self.reset()
+
         def is_game_ready() -> bool:
             return (
                 self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
@@ -230,6 +248,8 @@ class Game:
         pass
 
     async def game_loop(self) -> None:
+        self.set_next_entity_turn_id()
+
         while self.is_running:
             self.update(UPDATE_RATE)
 

@@ -13,5 +13,4 @@ client:
 server:
 	@cd $(PROJECT_FOLDER)/server && source .venv/Scripts/activate && $(PYTHON) main.py
 
-
 .PHONY: client server

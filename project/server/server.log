@@ -1,11 +1,11 @@
-2026-09-20 19:08:27,454 - INFO - server listening on 127.0.0.1:5400
-2026-09-20 19:08:27,454 - INFO - server listening on [::1]:5400
-2026-09-20 19:08:27,454 - INFO - Waiting for players...
-2026-09-20 19:08:31,850 - INFO - connection open
-2026-09-20 19:08:31,851 - INFO - 2b2d73b2-6b39-44b2-8d29-4ed226c9641e connected
-2026-09-20 19:08:33,415 - INFO - Recived: {"ready":true}
-2026-09-20 19:08:33,456 - INFO - 2b2d73b2-6b39-44b2-8d29-4ed226c9641e is ready
-2026-09-20 19:08:33,564 - INFO - Starting...
-2026-09-20 19:08:36,144 - INFO - server closing
-2026-09-20 19:08:36,146 - INFO - connection closed
-2026-09-20 19:08:36,146 - INFO - server closed
+2026-10-02 20:23:42,370 - INFO - server listening on [::1]:5400
+2026-10-02 20:23:42,370 - INFO - server listening on 127.0.0.1:5400
+2026-10-02 20:23:42,370 - INFO - Waiting for players...
+2026-10-02 20:23:44,553 - INFO - connection open
+2026-10-02 20:23:44,554 - INFO - eeda348b-908c-445c-b5fe-9b1f07cfd8c0 connected
+2026-10-02 20:23:46,501 - INFO - Recived: {"ready":true}
+2026-10-02 20:23:46,501 - INFO - eeda348b-908c-445c-b5fe-9b1f07cfd8c0 is ready
+2026-10-02 20:23:46,614 - INFO - Starting...
+2026-10-02 20:23:54,600 - INFO - server closing
+2026-10-02 20:23:54,601 - INFO - connection closed
+2026-10-02 20:23:54,601 - INFO - server closed
