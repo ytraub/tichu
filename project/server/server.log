@@ -1,12 +1,3 @@
-2026-10-02 21:19:44,809 - INFO - server listening on [::1]:5400
-2026-10-02 21:19:44,810 - INFO - server listening on 127.0.0.1:5400
-2026-10-02 21:19:44,810 - INFO - Waiting for players...
-2026-10-02 21:19:47,295 - INFO - connection open
-2026-10-02 21:19:47,295 - INFO - 33780b96-487c-42ce-8875-cda404284dfc connected
-2026-10-02 21:19:48,722 - INFO - Recived: {"ready":true}
-2026-10-02 21:19:48,824 - INFO - 33780b96-487c-42ce-8875-cda404284dfc is ready
-2026-10-02 21:19:48,933 - INFO - Starting...
-2026-10-02 21:19:50,687 - INFO - Recived: {"selected_cards":["red_7"]}
-2026-10-02 21:20:00,082 - INFO - server closing
-2026-10-02 21:20:00,083 - INFO - connection closed
-2026-10-02 21:20:00,083 - INFO - server closed
+2026-10-02 21:38:26,202 - INFO - server listening on 127.0.0.1:5400
+2026-10-02 21:38:26,202 - INFO - server listening on [::1]:5400
+2026-10-02 21:38:26,202 - INFO - Waiting for players...

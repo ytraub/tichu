@@ -31,12 +31,13 @@ class Game {
         this.state = undefined;
         this.hand = undefined;
         this.id = undefined;
-        
+
         this.isRunning = false;
         this.teams = undefined;
         this.entityTurnId = undefined;
+        this.discardPile = undefined;
 
-        this.selected_cards = new Set();
+        this.selectedCards = new Set();
 
         this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
 
@@ -54,12 +55,15 @@ class Game {
         const state = JSON.parse(event.data);
         this.state = state;
 
+        //console.log(state)
+
         this.hand = state.player.hand;
         this.id = state.player.id;
 
         this.isRunning = state.game.is_running;
         this.teams = state.game.teams;
         this.entityTurnId = state.game.entity_turn_id;
+        this.discardPile = state.game.discard_pile;
     }
 
     async onSocketClose(event) {
@@ -72,10 +76,11 @@ class Game {
 
     async onPlayCards(event) {
         const payload = {
-            "selected_cards": Array.from(this.selected_cards)
+            "selected_cards": Array.from(this.selectedCards)
         }
 
         this.socket.send(JSON.stringify(payload))
+        this.selectedCards.clear()
     }
 
     async startGame(event) {
@@ -102,10 +107,15 @@ class Game {
 
         this.cards = cards;
 
-        this.canvas.width = CANVAS_HEIGHT;
-        this.canvas.height = CANVAS_WIDTH;
+        this.canvas.height = CANVAS_HEIGHT;
+        this.canvas.width = CANVAS_WIDTH;
 
-        this.player_hand_center = {
+        this.discardPileCenter = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2
+        }
+
+        this.playerHandCenter = {
             x: this.canvas.width / 2,
             y: this.canvas.height - 50 - PADDING
         };
@@ -134,14 +144,14 @@ class Game {
         if (card) {
             const { id } = card;
 
-            if (this.selected_cards.has(id)) {
-                this.selected_cards.delete(id)
+            if (this.selectedCards.has(id)) {
+                this.selectedCards.delete(id)
             } else {
-                this.selected_cards.add(id, CARD_MAP.get(id))
+                this.selectedCards.add(id, CARD_MAP.get(id))
             }
         }
 
-        console.log(this.selected_cards)
+        console.log(this.selectedCards)
     }
 
     gameLoop(time) {
@@ -164,18 +174,24 @@ class Game {
         if (!this.state) return;
 
         this.renderHand()
+        this.renderDiscardPile();
         this.debug()
     }
 
-    getHandOrigin(hand) {
-        const { x, y } = this.player_hand_center
-        return { x: x - (hand.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
+    getHandOrigin() {
+        const { x, y } = this.playerHandCenter
+        return { x: x - (this.hand.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
+    }
+
+    getDiscardPileOrigin() {
+        const { x, y } = this.discardPileCenter
+        return { x: x - (this.discardPile.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
     }
 
     getCardAt(mouseX, mouseY) {
         if (!this.state) return
 
-        const { x, y } = this.getHandOrigin(this.hand);
+        const { x, y } = this.getHandOrigin();
 
         for (const [i, id] of this.hand.entries()) {
             const cardX = x + (i * (CARD_WIDTH + CARD_PADDING));
@@ -215,21 +231,33 @@ class Game {
         this.ctx.drawImage(this.cards, x, y, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
     }
 
-    renderHand() {
-        if (!this.state) return
-
-        const { x, y } = this.getHandOrigin(this.hand)
-
-        for (const [i, id] of this.hand.entries()) {
+    renderCardList(cards, x, y) {
+        for (const [i, id] of cards.entries()) {
             const pos_x = x + (i * (CARD_WIDTH + CARD_PADDING))
             const pos_y = y
 
-            if (this.selected_cards.has(id)) {
+            if (this.selectedCards.has(id)) {
                 this.renderCardBorder(pos_x, pos_y)
             }
 
             this.renderCard(id, pos_x, pos_y)
         }
+    }
+
+    renderHand() {
+        if (!this.state) return
+
+        const { x, y } = this.getHandOrigin()
+
+        this.renderCardList(this.hand, x, y)
+    }
+
+    renderDiscardPile() {
+        if (!this.discardPile) return
+
+        const { x, y } = this.getDiscardPileOrigin()
+
+        this.renderCardList(this.discardPile, x, y)
     }
 
     clearScreen() {
