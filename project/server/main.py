@@ -26,7 +26,11 @@ logging.basicConfig(
 )
 
 
-class InvalidTurn(Exception):
+class CardsNotOnHandException(Exception):
+    pass
+
+
+class InvalidCombinationException(Exception):
     pass
 
 
@@ -36,11 +40,15 @@ class Message:
     payload: Any
 
 
-@dataclass
 class Entity:
     id: str
     hand: list[str]
     ready: bool = False
+
+    def __init__(self, id, hand, ready) -> None:
+        self.id = id
+        self.hand = hand
+        self.ready = ready
 
     def get_id(self) -> str:
         return self.id
@@ -68,10 +76,7 @@ class Player(Entity):
     client: websockets.ServerConnection
 
     def __init__(self, client: websockets.ServerConnection) -> None:
-        super().__init__(
-            id=str(uuid.uuid4()),
-            hand=[],
-        )
+        super().__init__(str(uuid.uuid4()), [], False)
         self.client = client
 
     async def send_state(self, game_state: Any) -> None:
@@ -84,8 +89,7 @@ class Player(Entity):
 
 class Bot(Entity):
     def __init__(self) -> None:
-        self.id = str(uuid.uuid4())
-        self.ready = True
+        super().__init__(str(uuid.uuid4()), [], True)
 
     async def send_state(self, game_state: Any) -> None:
         return await super().send_state(game_state)
@@ -202,9 +206,11 @@ class Game:
             entity.set_ready(message.payload.get("ready"))
 
     def try_play_cards(self, entity: Entity, cards: list[str]) -> None:
+
+        # Now check if player actually has these cards
         for card in cards:
             if not card in entity.hand:
-                raise InvalidTurn
+                raise CardsNotOnHandException
 
             entity.hand.remove(card)
 
@@ -223,7 +229,9 @@ class Game:
 
             try:
                 self.try_play_cards(entity, selected_cards)
-            except InvalidTurn:
+            except InvalidCombinationException:
+                return
+            except CardsNotOnHandException:
                 return
 
             self.discard_pile = selected_cards
