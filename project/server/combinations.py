@@ -11,6 +11,9 @@ class Combination:
     def verify(self) -> bool:
         return False
 
+    def beats(self, combination: Self) -> bool:
+        return False
+
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
         return cls()
@@ -23,6 +26,12 @@ class Single(Combination):
 
     def verify(self) -> bool:
         return True
+
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, Single):
+            return False
+
+        return self.card.value > combination.card.value
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -41,6 +50,15 @@ class Pair(Combination):
         a, b = self.cards
 
         return a.value == b.value
+
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, Pair):
+            return False
+
+        x, _ = self.cards
+        y, _ = combination.cards
+
+        return x.value > y.value
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -65,6 +83,15 @@ class ThreeOfAKind(Combination):
 
         return a.value == b.value and a.value == c.value
 
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, ThreeOfAKind):
+            return False
+
+        x, _, _ = self.cards
+        y, _, _ = combination.cards
+
+        return x.value > y.value
+
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
         if len(cards) != cls.min_cards_required:
@@ -86,6 +113,12 @@ class FullHouse(Combination):
 
     def verify(self) -> bool:
         return self.pair.verify() and self.three_of_a_kind.verify()
+
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, FullHouse):
+            return False
+
+        return self.three_of_a_kind.beats(combination.three_of_a_kind)
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -132,6 +165,18 @@ class Straight(Combination):
 
         return True
 
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, Straight):
+            return False
+
+        if len(self.cards) != len(combination.cards):
+            return False
+
+        x = self.cards[0]
+        y = combination.cards[0]
+
+        return x.value > y.value
+
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
         if len(cards) < cls.min_cards_required:
@@ -168,6 +213,18 @@ class PairStraight(Combination):
 
         return True
 
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, PairStraight):
+            return False
+
+        if len(self.cards) != len(combination.cards):
+            return False
+
+        x = self.cards[0]
+        y = combination.cards[0]
+
+        return x.beats(y)
+
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
         if len(cards) < cls.min_cards_required:
@@ -196,6 +253,15 @@ class Bomb(Combination):
         a, b, c, d = self.cards
 
         return a.value == b.value and a.value == c.value and a.value == d.value
+
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, Bomb):
+            return False
+
+        x, _, _, _ = self.cards
+        y, _, _, _ = combination.cards
+
+        return x.value > y.value
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -231,6 +297,15 @@ class StraightBomb(Combination):
             start_value = card.value
 
         return True
+
+    def beats(self, combination: Combination) -> bool:
+        if not isinstance(combination, StraightBomb):
+            return False
+
+        if len(self.cards) == len(combination.cards):
+            return self.cards[0].value > combination.cards[0].value
+
+        return len(self.cards) > len(combination.cards)
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -278,7 +353,8 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
             except InvalidCombinationException:
                 continue
 
+
 if __name__ == "__main__":
     x = card_ids_to_combination(["blue_2", "red_2", "black_2", "black_k", "green_k"])
-    
+
     print(x)

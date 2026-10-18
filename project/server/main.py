@@ -10,7 +10,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
-from combinations import card_ids_to_combination
+from combinations import card_ids_to_combination, Combination
 from utils import CardsNotOnHandException, InvalidCombinationException
 
 UPDATE_RATE = 1 / 30
@@ -102,7 +102,9 @@ class Game:
 
         self.entity_turn_id = None
         self.turn_count = 0
-        self.discard_pile = []
+
+        self.stack: list[list[str]] = []
+        self.current_combination: Combination | None = None
 
     # Must be JSON serializable
     def state(self) -> Any:
@@ -110,7 +112,7 @@ class Game:
             "is_running": self.is_running,
             "entity_turn_id": self.entity_turn_id,
             "teams": self.teams,
-            "discard_pile": self.discard_pile,
+            "stack": self.stack,
         }
 
     def get_entity_by_id(self, id: str) -> Entity | None:
@@ -130,7 +132,7 @@ class Game:
 
         return True
 
-    def set_next_entity_turn_id(self) -> None:
+    def next_turn(self) -> None:
         team = "a" if self.turn_count % 2 == 0 else "b"
         entity = "a" if self.turn_count % 4 < 2 else "b"
 
@@ -162,7 +164,7 @@ class Game:
 
         self.remove_entity_from_team(entity.id)
 
-    async def client_handler(self, ws: websockets.ServerConnection) -> None:
+    async def client_recive(self, ws: websockets.ServerConnection) -> None:
         player = Player(ws)
         self.add_entity(player)
 
@@ -200,6 +202,15 @@ class Game:
             entity.set_ready(message.payload.get("ready"))
 
     def try_play_cards(self, entity: Entity, card_ids: list[str]) -> None:
+        combination = card_ids_to_combination(card_ids)
+
+        if combination is None:
+            raise InvalidCombinationException
+
+        if self.current_combination != None and type(combination) != type(self.current_combination):
+            raise InvalidCombinationException
+
+        self.current_combination = combination
 
         # Now check if player actually has these card_ids
         for card in card_ids:
@@ -228,10 +239,10 @@ class Game:
             except CardsNotOnHandException:
                 return
 
-            self.discard_pile = selected_card_ids
+            self.stack.append(selected_card_ids)
 
             # Go to the next player
-            self.set_next_entity_turn_id()
+            self.next_turn()
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
@@ -249,13 +260,13 @@ class Game:
         for i, entity in enumerate(self.entities):
             entity.set_hand(hands[i])
 
-    def reset(self) -> None:
+    def init_game(self) -> None:
         self.entity_turn_id = None
         self.turn_count = 0
-        self.discard_pile = []
+        self.stack = []
 
-    async def start(self) -> None:
-        self.reset()
+    async def start_game(self) -> None:
+        self.init_game()
 
         def is_game_ready() -> bool:
             return (
@@ -277,13 +288,13 @@ class Game:
         await self.game_loop()
 
         # start new game
-        await self.start()
+        await self.start_game()
 
     async def update(self, dt) -> None:
         await self.handle_game_messages()
 
     async def game_loop(self) -> None:
-        self.set_next_entity_turn_id()
+        self.next_turn()
 
         while self.is_running:
             await self.update(UPDATE_RATE)
@@ -301,12 +312,12 @@ async def main():
     game = Game()
 
     async with websockets.serve(
-        game.client_handler,
+        game.client_recive,
         "localhost",
         SOCKET_PORT,
     ):
         print("Server listening on port", SOCKET_PORT)
-        await game.start()
+        await game.start_game()
 
 
 if __name__ == "__main__":
