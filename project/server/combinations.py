@@ -356,5 +356,13 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 if __name__ == "__main__":
     x = card_ids_to_combination(["blue_2", "red_2", "black_2", "black_k", "green_k"])
-
-    print(x)
+    y = card_ids_to_combination(["blue_3", "red_3", "black_3", "black_4", "green_4"])
+    x = card_ids_to_combination(["blue_2"])
+    y = card_ids_to_combination(["blue_3"])
+    x = card_ids_to_combination(["blue_a", "black_a"])
+    y = card_ids_to_combination(["blue_j", "blue_j", "green_j"])
+    
+    if x is None or y is None:
+        pass
+    else:
+        print(x.beats(y))
