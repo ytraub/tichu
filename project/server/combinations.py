@@ -246,14 +246,14 @@ class StraightBomb(Combination):
 
 
 COMBINATIONS: list[type[Combination]] = [
-    Single,
-    Pair,
-    ThreeOfAKind,
     FullHouse,
-    StraightBomb,
-    Straight,
     PairStraight,
     Bomb,
+    Straight,
+    StraightBomb,
+    ThreeOfAKind,
+    Pair,
+    Single,
 ]
 
 
@@ -279,6 +279,6 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
                 continue
 
 if __name__ == "__main__":
-    x = card_ids_to_combination(["blue_2", "red_2", "black_2", "green_2"])
+    x = card_ids_to_combination(["blue_2", "red_2", "black_2", "black_k", "green_k"])
     
     print(x)
