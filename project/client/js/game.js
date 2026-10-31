@@ -55,7 +55,7 @@ class Game {
         const state = JSON.parse(event.data);
         this.state = state;
 
-        //console.log(state)
+        console.log(state)
 
         this.hand = state.player.hand;
         this.id = state.player.id;

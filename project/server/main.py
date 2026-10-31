@@ -11,7 +11,12 @@ from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
 from combinations import card_ids_to_combination, Combination
-from utils import CardsNotOnHandException, InvalidCombinationException, WrongCombinationException, LowCombinationException
+from utils import (
+    CardsNotOnHandException,
+    InvalidCombinationException,
+    WrongCombinationException,
+    LowCombinationException,
+)
 
 UPDATE_RATE = 1 / 30
 SOCKET_PORT = 5400
@@ -108,11 +113,17 @@ class Game:
 
     # Must be JSON serializable
     def state(self) -> Any:
+
         return {
             "is_running": self.is_running,
             "entity_turn_id": self.entity_turn_id,
             "teams": self.teams,
             "stack": self.stack,
+            "current_combination": (
+                self.current_combination.json()
+                if self.current_combination is not None
+                else None
+            ),
         }
 
     def get_entity_by_id(self, id: str) -> Entity | None:
@@ -207,10 +218,14 @@ class Game:
         if combination is None:
             raise InvalidCombinationException
 
-        if self.current_combination != None and type(combination) != type(self.current_combination):
+        if self.current_combination != None and type(combination) != type(
+            self.current_combination
+        ):
             raise WrongCombinationException
 
-        if self.current_combination != None and not combination.beats(self.current_combination):
+        if self.current_combination != None and not combination.beats(
+            self.current_combination
+        ):
             raise LowCombinationException
 
         self.current_combination = combination
