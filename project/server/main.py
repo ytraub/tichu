@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
 from combinations import card_ids_to_combination, Combination
-from utils import CardsNotOnHandException, InvalidCombinationException
+from utils import CardsNotOnHandException, InvalidCombinationException, WrongCombinationException, LowCombinationException
 
 UPDATE_RATE = 1 / 30
 SOCKET_PORT = 5400
@@ -208,7 +208,10 @@ class Game:
             raise InvalidCombinationException
 
         if self.current_combination != None and type(combination) != type(self.current_combination):
-            raise InvalidCombinationException
+            raise WrongCombinationException
+
+        if self.current_combination != None and not combination.beats(self.current_combination):
+            raise LowCombinationException
 
         self.current_combination = combination
 

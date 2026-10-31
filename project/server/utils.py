@@ -1,11 +1,19 @@
 from typing import Any
 
-
 class CardsNotOnHandException(Exception):
     pass
 
 
-class InvalidCombinationException(Exception):
+class CombinationException(Exception):
+    pass
+
+class InvalidCombinationException(CombinationException):
+    pass
+
+class WrongCombinationException(CombinationException):
+    pass
+
+class LowCombinationException(CombinationException):
     pass
 
 
