@@ -55,8 +55,6 @@ class Game {
         const state = JSON.parse(event.data);
         this.state = state;
 
-        console.log(state)
-
         this.hand = state.player.hand;
         this.id = state.player.id;
 
@@ -64,6 +62,7 @@ class Game {
         this.teams = state.game.teams;
         this.entityTurnId = state.game.entity_turn_id;
         this.discardPile = state.game.discard_pile;
+        this.currentCombination = state.game.current_combination;
     }
 
     async onSocketClose(event) {
@@ -173,14 +172,19 @@ class Game {
 
         if (!this.state) return;
 
-        this.renderHand()
+        this.renderCurrentCombination();
+        this.renderHand();
         this.renderDiscardPile();
-        this.debug()
+        this.debug();
+    }
+
+    getCardListOrigin(card_list, x, y) {
+        return { x: x - (card_list.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
     }
 
     getHandOrigin() {
         const { x, y } = this.playerHandCenter
-        return { x: x - (this.hand.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
+        return this.getCardListOrigin(this.hand, x, y)
     }
 
     getDiscardPileOrigin() {
@@ -213,6 +217,12 @@ class Game {
         return null;
     }
 
+    renderCurrentCombination() {
+        if (!this.state || !this.currentCombination) return
+
+        this.renderCardList(this.currentCombination, this.canvas.width / 2, this.canvas.height / 2);
+    }
+
     // Draw a yellow highlight behind the card
     renderCardBorder(pos_x, pos_y) {
         this.ctx.fillStyle = "yellow"
@@ -231,8 +241,10 @@ class Game {
         this.ctx.drawImage(this.cards, x, y, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
     }
 
-    renderCardList(cards, x, y) {
-        for (const [i, id] of cards.entries()) {
+    renderCardList(card_list, center_x, center_y) {
+        const { x, y } = this.getCardListOrigin(card_list, center_x, center_y)
+
+        for (const [i, id] of card_list.entries()) {
             const pos_x = x + (i * (CARD_WIDTH + CARD_PADDING))
             const pos_y = y
 
@@ -247,7 +259,7 @@ class Game {
     renderHand() {
         if (!this.state) return
 
-        const { x, y } = this.getHandOrigin()
+        const { x, y } = this.playerHandCenter
 
         this.renderCardList(this.hand, x, y)
     }
