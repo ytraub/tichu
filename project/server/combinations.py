@@ -28,7 +28,7 @@ class Single(Combination):
     min_cards_required = 1
 
     def json(self) -> Any:
-        return (self.card.card_id)
+        return [self.card.card_id]
 
     def verify(self) -> bool:
         return True

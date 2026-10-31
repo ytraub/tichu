@@ -78,7 +78,7 @@ class Game {
 
     async onPlayCards(event) {
         const payload = {
-            "selected_cards": Array.from(this.selectedCards)
+            "played_cards": Array.from(this.selectedCards)
         }
 
         this.socket.send(JSON.stringify(payload))

@@ -107,6 +107,7 @@ class Game:
 
         self.entity_turn_id = None
         self.turn_count = 0
+        self.continous_pass_count = 0
 
         self.stack: list[list[str]] = []
         self.current_combination: Combination | None = None
@@ -144,11 +145,16 @@ class Game:
         return True
 
     def next_turn(self) -> None:
+        if self.continous_pass_count == 3:
+            self.continous_pass_count = 0
+            self.current_combination = None
+            
         team = "a" if self.turn_count % 2 == 0 else "b"
         entity = "a" if self.turn_count % 4 < 2 else "b"
 
         self.entity_turn_id = self.teams[team][entity]
         self.turn_count += 1
+
 
     def add_entity_to_team(self, entity_id: str) -> None:
         for team in self.teams.values():
@@ -247,8 +253,8 @@ class Game:
         if not entity:
             return
 
-        if message.payload.get("selected_cards"):
-            selected_card_ids = message.payload["selected_cards"]
+        if message.payload.get("played_cards"):
+            selected_card_ids = message.payload["played_cards"]
 
             try:
                 self.try_play_cards(entity, selected_card_ids)
@@ -260,10 +266,12 @@ class Game:
             self.stack.append(selected_card_ids)
 
             # Go to the next player
+            self.continous_pass_count = 0
             self.next_turn()
-            
+
         if message.payload.get("pass"):
-            if message.payload.get("pass")is True:
+            if message.payload.get("pass") is True:
+                self.continous_pass_count += 1
                 self.next_turn()
 
     def init_bots(self) -> None:
