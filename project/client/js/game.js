@@ -23,6 +23,9 @@ class Game {
         this.playCardButton = document.getElementById("play_cards_btn");
         this.playCardButton.onclick = (event) => this.onPlayCards(event);
 
+        this.passButton = document.getElementById("pass_btn");
+        this.passButton.onclick = (event) => this.onPass(event);
+
         this.teamsDebug = document.getElementById("teams_debug")
         this.entityTurnIdDebug = document.getElementById("entity_turn_id_debug")
 
@@ -80,6 +83,14 @@ class Game {
 
         this.socket.send(JSON.stringify(payload))
         this.selectedCards.clear()
+    }
+
+    async onPass(event) {
+        const payload = {
+            "pass": true
+        }
+
+        this.socket.send(payload)
     }
 
     async startGame(event) {
@@ -165,6 +176,7 @@ class Game {
     update() {
         this.startGameButton.disabled = this.isRunning;
         this.playCardButton.disabled = this.id !== this.entityTurnId
+        this.passButton.disabled = this.id !== this.entityTurnId
     }
 
     render() {
