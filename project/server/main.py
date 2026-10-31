@@ -109,7 +109,7 @@ class Game:
         self.turn_count = 0
         self.continous_pass_count = 0
 
-        self.stack: list[list[str]] = []
+        self.stack: list[Combination] = []
         self.current_combination: Combination | None = None
 
     # Must be JSON serializable
@@ -119,7 +119,6 @@ class Game:
             "is_running": self.is_running,
             "entity_turn_id": self.entity_turn_id,
             "teams": self.teams,
-            "stack": self.stack,
             "current_combination": (
                 self.current_combination.json()
                 if self.current_combination is not None
@@ -148,13 +147,12 @@ class Game:
         if self.continous_pass_count == 3:
             self.continous_pass_count = 0
             self.current_combination = None
-            
+
         team = "a" if self.turn_count % 2 == 0 else "b"
         entity = "a" if self.turn_count % 4 < 2 else "b"
 
         self.entity_turn_id = self.teams[team][entity]
         self.turn_count += 1
-
 
     def add_entity_to_team(self, entity_id: str) -> None:
         for team in self.teams.values():
@@ -230,9 +228,12 @@ class Game:
             raise WrongCombinationException
 
         if self.current_combination != None and not combination.beats(
-            self.current_combination
+            self.current_combination, self.stack[-1] if len(self.stack) > 0 else None
         ):
             raise LowCombinationException
+
+        if self.current_combination:
+            self.stack.append(self.current_combination)
 
         self.current_combination = combination
 
@@ -262,8 +263,6 @@ class Game:
                 return
             except CardsNotOnHandException:
                 return
-
-            self.stack.append(selected_card_ids)
 
             # Go to the next player
             self.continous_pass_count = 0

@@ -1,4 +1,4 @@
-from typing import Self, Any
+from typing import Self, Any, Optional
 from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
@@ -14,7 +14,9 @@ class Combination:
     def verify(self) -> bool:
         return False
 
-    def beats(self, combination: Self) -> bool:
+    def beats(
+        self, combination: Self, previous_combination: Self | None = None
+    ) -> bool:
         return False
 
     @classmethod
@@ -33,9 +35,20 @@ class Single(Combination):
     def verify(self) -> bool:
         return True
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, Single):
             return False
+
+        if self.card.card_id == "phoenix":
+            return combination.card.value < 15
+
+        if combination.card.card_id == "phoenix":
+            if not isinstance(previous_combination, Single):
+                return False
+
+            return self.card.value > previous_combination.card.value
 
         return self.card.value > combination.card.value
 
@@ -62,7 +75,9 @@ class Pair(Combination):
 
         return a.value == b.value
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, Pair):
             return False
 
@@ -99,7 +114,9 @@ class ThreeOfAKind(Combination):
 
         return a.value == b.value and a.value == c.value
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, ThreeOfAKind):
             return False
 
@@ -133,7 +150,9 @@ class FullHouse(Combination):
     def verify(self) -> bool:
         return self.pair.verify() and self.three_of_a_kind.verify()
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, FullHouse):
             return False
 
@@ -187,7 +206,9 @@ class Straight(Combination):
 
         return True
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, Straight):
             return False
 
@@ -238,7 +259,9 @@ class PairStraight(Combination):
 
         return True
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, PairStraight):
             return False
 
@@ -284,7 +307,9 @@ class Bomb(Combination):
 
         return a.value == b.value and a.value == c.value and a.value == d.value
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, Bomb):
             return False
 
@@ -331,7 +356,9 @@ class StraightBomb(Combination):
 
         return True
 
-    def beats(self, combination: Combination) -> bool:
+    def beats(
+        self, combination: Combination, previous_combination: Combination | None = None
+    ) -> bool:
         if not isinstance(combination, StraightBomb):
             return False
 
