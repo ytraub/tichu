@@ -26,9 +26,9 @@ MAX_PLAYERS = 4
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    filename="server.log",
+    filename=".log",
     level=logging.INFO,
-    filemode="w",
+    filemode="w+",
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
