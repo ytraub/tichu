@@ -261,6 +261,10 @@ class Game:
 
             # Go to the next player
             self.next_turn()
+            
+        if message.payload.get("pass"):
+            if message.payload.get("pass")is True:
+                self.next_turn()
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):

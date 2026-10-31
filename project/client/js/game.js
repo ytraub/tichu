@@ -90,7 +90,7 @@ class Game {
             "pass": true
         }
 
-        this.socket.send(payload)
+        this.socket.send(JSON.stringify(payload))
     }
 
     async startGame(event) {
