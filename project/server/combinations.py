@@ -206,7 +206,7 @@ class FullHouse(Combination):
                     )
 
                     if (
-                        matching_card_list[0].value < remaining_card_list[0].value
+                        matching_without_phoenix[0].value < remaining_without_phoenix[0].value
                     ):  # phoenix already at right place
                         return Pair.from_cards(
                             matching_card_list
@@ -269,16 +269,16 @@ class Straight(Combination):
         return True
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self, their_combination: Combination, previous_combination: Combination | None = None
     ) -> bool:
-        if not isinstance(combination, Straight):
+        if not isinstance(their_combination, Straight):
             return False
 
-        if len(self.cards) != len(combination.cards):
+        if len(self.cards) != len(their_combination.cards):
             return False
 
         x = self.cards[0]
-        y = combination.cards[0]
+        y = their_combination.cards[0]
 
         return x.value > y.value
 
@@ -322,16 +322,16 @@ class PairStraight(Combination):
         return True
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self, their_combination: Combination, previous_combination: Combination | None = None
     ) -> bool:
-        if not isinstance(combination, PairStraight):
+        if not isinstance(their_combination, PairStraight):
             return False
 
-        if len(self.cards) != len(combination.cards):
+        if len(self.cards) != len(their_combination.cards):
             return False
 
         x = self.cards[0]
-        y = combination.cards[0]
+        y = their_combination.cards[0]
 
         return x.beats(y)
 
@@ -370,13 +370,13 @@ class Bomb(Combination):
         return a.value == b.value and a.value == c.value and a.value == d.value
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self, their_combination: Combination, previous_combination: Combination | None = None
     ) -> bool:
-        if not isinstance(combination, Bomb):
+        if not isinstance(their_combination, Bomb):
             return False
 
         x, _, _, _ = self.cards
-        y, _, _, _ = combination.cards
+        y, _, _, _ = their_combination.cards
 
         return x.value > y.value
 
@@ -419,15 +419,15 @@ class StraightBomb(Combination):
         return True
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self, their_combination: Combination, previous_combination: Combination | None = None
     ) -> bool:
-        if not isinstance(combination, StraightBomb):
+        if not isinstance(their_combination, StraightBomb):
             return False
 
-        if len(self.cards) == len(combination.cards):
-            return self.cards[0].value > combination.cards[0].value
+        if len(self.cards) == len(their_combination.cards):
+            return self.cards[0].value > their_combination.cards[0].value
 
-        return len(self.cards) > len(combination.cards)
+        return len(self.cards) > len(their_combination.cards)
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
