@@ -121,7 +121,7 @@ class ThreeOfAKind(Combination):
 
     def verify(self) -> bool:
         without_phoenix = get_card_list_without_phoenix(list(self.cards))
-        
+
         return all(x.value == without_phoenix[0].value for x in without_phoenix)
 
     def beats(
@@ -165,15 +165,72 @@ class FullHouse(Combination):
         return self.pair.verify() and self.three_of_a_kind.verify()
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
-        if not isinstance(combination, FullHouse):
+        if not isinstance(their_combination, FullHouse):
             return False
 
-        return self.three_of_a_kind.beats(combination.three_of_a_kind)
+        return self.three_of_a_kind.beats(their_combination.three_of_a_kind)
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
+        def get_subsets(
+            matching_card_list: list[Card], remaining_card_list: list[Card]
+        ) -> tuple[Pair, ThreeOfAKind]:
+            match len(matching_card_list):
+                case 1:  # phoenix required in pair matching
+                    has_phoenix, i = contains_phoenix(remaining_card_list)
+
+                    if not has_phoenix:
+                        raise InvalidCombinationException()
+
+                    phoenix = remaining_card_list.pop(i)
+
+                    return Pair.from_cards(
+                        [*matching_card_list, phoenix]
+                    ), ThreeOfAKind.from_cards(remaining_card_list)
+                case 2:  # could be both, for now chose higher
+                    has_phoenix, i = contains_phoenix(remaining_card_list)
+                    if not has_phoenix:  # No phoenix at all
+                        return Pair.from_cards(
+                            matching_card_list
+                        ), ThreeOfAKind.from_cards(remaining_card_list)
+
+                    matching_without_phoenix = get_card_list_without_phoenix(
+                        matching_card_list
+                    )
+                    remaining_without_phoenix = get_card_list_without_phoenix(
+                        remaining_card_list
+                    )
+
+                    if (
+                        matching_card_list[0].value < remaining_card_list[0].value
+                    ):  # phoenix already at right place
+                        return Pair.from_cards(
+                            matching_card_list
+                        ), ThreeOfAKind.from_cards(remaining_card_list)
+
+                    phoenix = remaining_card_list.pop(i)
+
+                    return Pair.from_cards(
+                        remaining_card_list
+                    ), ThreeOfAKind.from_cards([*matching_card_list, phoenix])
+
+                case 3:  # phoenix required in pair remaining
+                    has_phoenix, _ = contains_phoenix(remaining_card_list)
+                    if not has_phoenix:  # No phoenix at all
+                        return Pair.from_cards(
+                            remaining_card_list
+                        ), ThreeOfAKind.from_cards(matching_card_list)
+
+                    return Pair.from_cards(
+                        remaining_card_list
+                    ), ThreeOfAKind.from_cards(matching_card_list)
+                case _:
+                    raise InvalidCombinationException()
+
         if len(cards) != cls.min_cards_required:
             raise InvalidCombinationException()
 
@@ -181,16 +238,7 @@ class FullHouse(Combination):
         matching = [card for card in cards if card.value == anchor_value]
         remaining = list_subtraction(cards, matching)
 
-        if len(matching) == 2:
-            pair = Pair.from_cards(matching)
-            three_of_a_kind = ThreeOfAKind.from_cards(remaining)
-
-        elif len(matching) == 3:
-            three_of_a_kind = ThreeOfAKind.from_cards(matching)
-            pair = Pair.from_cards(remaining)
-
-        else:
-            raise InvalidCombinationException()
+        pair, three_of_a_kind = get_subsets(matching, remaining)
 
         if not (pair.verify() and three_of_a_kind.verify()):
             raise InvalidCombinationException()
@@ -441,13 +489,16 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 
 if __name__ == "__main__":
-    x = card_ids_to_combination(["black_a", "phoenix"])
-    y = card_ids_to_combination(["black_k", "black_k"])
-    
+    x = card_ids_to_combination(["black_a", "black_a", "green_a", "red_2", "black_2"])
     print(x)
-    print(y)
+    """ x = card_ids_to_combination(["black_a", "phoenix", "green_2", "red_2", "black_2"])
+    print(x)
+    x = card_ids_to_combination(["black_a", "green_a", "phoenix", "red_2", "black_2"])
+    print(x)
+    x = card_ids_to_combination(["black_k", "phoenix", "green_k", "red_q", "black_q"])
+    print(x) """
 
-    if x is None or y is None:
+    """ if x is None or y is None:
         pass
     else:
-        print(x.beats(y))
+        print(x.beats(y)) """
