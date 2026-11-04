@@ -15,7 +15,7 @@ class Combination:
         return False
 
     def beats(
-        self, combination: Self, previous_combination: Self | None = None
+        self, their_combination: Self, previous_combination: Self | None = None
     ) -> bool:
         return False
 
@@ -36,21 +36,23 @@ class Single(Combination):
         return True
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
-        if not isinstance(combination, Single):
+        if not isinstance(their_combination, Single):
             return False
 
         if self.card.card_id == "phoenix":
-            return combination.card.value < 15
+            return their_combination.card.value < 15
 
-        if combination.card.card_id == "phoenix":
+        if their_combination.card.card_id == "phoenix":
             if not isinstance(previous_combination, Single):
                 return False
 
             return self.card.value > previous_combination.card.value
 
-        return self.card.value > combination.card.value
+        return self.card.value > their_combination.card.value
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -73,18 +75,26 @@ class Pair(Combination):
     def verify(self) -> bool:
         a, b = self.cards
 
+        has_phoenix, _ = contains_phoenix(list(self.cards))
+        if has_phoenix:
+            return True
+
         return a.value == b.value
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
-        if not isinstance(combination, Pair):
+        if not isinstance(their_combination, Pair):
             return False
 
-        x, _ = self.cards
-        y, _ = combination.cards
+        my_without_phoenix = get_card_list_without_phoenix(list(self.cards))
+        they_without_phoenix = get_card_list_without_phoenix(
+            list(their_combination.cards)
+        )
 
-        return x.value > y.value
+        return my_without_phoenix[0].value > they_without_phoenix[0].value
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -110,20 +120,24 @@ class ThreeOfAKind(Combination):
         return (a.card_id, b.card_id, c.card_id)
 
     def verify(self) -> bool:
-        a, b, c = self.cards
-
-        return a.value == b.value and a.value == c.value
+        without_phoenix = get_card_list_without_phoenix(list(self.cards))
+        
+        return all(x.value == without_phoenix[0].value for x in without_phoenix)
 
     def beats(
-        self, combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
-        if not isinstance(combination, ThreeOfAKind):
+        if not isinstance(their_combination, ThreeOfAKind):
             return False
 
-        x, _, _ = self.cards
-        y, _, _ = combination.cards
+        my_without_phoenix = get_card_list_without_phoenix(list(self.cards))
+        they_without_phoenix = get_card_list_without_phoenix(
+            list(their_combination.cards)
+        )
 
-        return x.value > y.value
+        return my_without_phoenix[0].value > they_without_phoenix[0].value
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
@@ -392,6 +406,18 @@ COMBINATIONS: list[type[Combination]] = [
 ]
 
 
+def get_card_list_without_phoenix(card_list: list[Card]) -> list[Card]:
+    return [card for card in card_list if not card.card_id == "phoenix"]
+
+
+def contains_phoenix(card_list: list[Card]) -> tuple[bool, int]:
+    for i, card in enumerate(card_list):
+        if card.card_id == "phoenix":
+            return True, i
+
+    return False, -1
+
+
 def get_cards_from_card_ids(card_ids: list[str]) -> list[Card]:
     cards = []
 
@@ -415,12 +441,11 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 
 if __name__ == "__main__":
-    x = card_ids_to_combination(["blue_2", "red_2", "black_2", "black_k", "green_k"])
-    y = card_ids_to_combination(["blue_3", "red_3", "black_3", "black_4", "green_4"])
-    x = card_ids_to_combination(["blue_2"])
-    y = card_ids_to_combination(["blue_3"])
-    x = card_ids_to_combination(["blue_a", "black_a"])
-    y = card_ids_to_combination(["blue_j", "blue_j", "green_j"])
+    x = card_ids_to_combination(["black_a", "phoenix"])
+    y = card_ids_to_combination(["black_k", "black_k"])
+    
+    print(x)
+    print(y)
 
     if x is None or y is None:
         pass
