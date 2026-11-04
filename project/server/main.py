@@ -10,6 +10,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
+from itertools import combinations
 from combinations import card_ids_to_combination, Combination
 from utils import (
     CardsNotOnHandException,
@@ -70,6 +71,9 @@ class Entity:
     async def send_state(self, game_state: Any) -> None:
         pass
 
+    def choose_action(self) -> dict[str, Any]:
+        pass
+
 
 class Player(Entity):
     client: websockets.ServerConnection
@@ -90,9 +94,27 @@ class Bot(Entity):
     def __init__(self) -> None:
         super().__init__(str(uuid.uuid4()), [], True)
 
-    async def send_state(self, game_state: Any) -> None:
-        return await super().send_state(game_state)
+    def choose_action(self, game) -> dict[str, Any] :
+        legal: list[list[str]] = []
 
+        for size in range(1, len(self.hand) + 1):
+            for ids in combinations(self.hand, size):
+                try:
+                    game.can_play(self.hand, list(ids))
+                except (
+                    InvalidCombinationException,
+                    WrongCombinationException,
+                    LowCombinationException,
+                    CardsNotOnHandException,
+                ):
+                    continue
+                legal.append(list(ids))
+
+        can_pass = game.current_combination is not None
+        if can_pass and (not legal or random.random() < 0.3):
+            return {"pass": True}
+
+        return {"played_cards": random.choice(legal)}
 
 class Game:
     def __init__(self) -> None:
@@ -216,7 +238,13 @@ class Game:
             logger.info(f"{entity.get_id()} is ready")
             entity.set_ready(message.payload.get("ready"))
 
-    def try_play_cards(self, entity: Entity, card_ids: list[str]) -> None:
+    def can_play(self, hand: list[str], card_ids: list[str]) -> Combination:
+        if len(set(card_ids)) != len(card_ids):
+            raise InvalidCombinationException
+
+        if any(card not in hand for card in card_ids):
+            raise CardsNotOnHandException
+
         combination = card_ids_to_combination(card_ids)
 
         if combination is None:
@@ -231,18 +259,27 @@ class Game:
             self.current_combination, self.stack[-1] if len(self.stack) > 0 else None
         ):
             raise LowCombinationException
+        
+        return combination
 
+    def try_play_cards(self, entity: Entity, card_ids: list[str]) -> None:
+        combination = self.can_play(entity.hand, card_ids)
+        
         if self.current_combination:
             self.stack.append(self.current_combination)
 
         self.current_combination = combination
 
-        # Now check if player actually has these card_ids
         for card in card_ids:
-            if not card in entity.hand:
-                raise CardsNotOnHandException
-
             entity.hand.remove(card)
+
+    def queue_bot_action(self) -> None:
+        bot = self.get_entity_by_id(self.entity_turn_id)
+
+        if not isinstance(bot, Bot):
+            return
+
+        self.message_queue.append(Message(bot.get_id(), bot.choose_action(self)))
 
     async def handle_game_messages(self) -> None:
         if not len(self.message_queue):
@@ -321,6 +358,7 @@ class Game:
 
     async def update(self, dt) -> None:
         await self.handle_game_messages()
+        self.queue_bot_action()
 
     async def game_loop(self) -> None:
         self.next_turn()
