@@ -206,7 +206,8 @@ class FullHouse(Combination):
                     )
 
                     if (
-                        matching_without_phoenix[0].value < remaining_without_phoenix[0].value
+                        matching_without_phoenix[0].value
+                        < remaining_without_phoenix[0].value
                     ):  # phoenix already at right place
                         return Pair.from_cards(
                             matching_card_list
@@ -255,21 +256,35 @@ class Straight(Combination):
         return (card.card_id for card in self.cards)
 
     def verify(self) -> bool:
-        if len(self.cards) < 5:
-            return False
+        has_phoenix, phoenix_index = contains_phoenix(self.cards)
+        phoenix = None
+
+        if has_phoenix:
+            phoenix = self.cards.pop(phoenix_index)
 
         start_value = None
 
-        for card in self.cards:
+        for i, card in enumerate(self.cards):
             if start_value is not None and card.value != start_value + 1:
-                return False
+                if phoenix is None:
+                    return False
+
+                self.cards.insert(i, phoenix)
+                phoenix = None
+                start_value = card.value - 1
+                continue
 
             start_value = card.value
+
+        if phoenix is not None:
+            self.cards.append(phoenix)
 
         return True
 
     def beats(
-        self, their_combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
         if not isinstance(their_combination, Straight):
             return False
@@ -322,7 +337,9 @@ class PairStraight(Combination):
         return True
 
     def beats(
-        self, their_combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
         if not isinstance(their_combination, PairStraight):
             return False
@@ -370,7 +387,9 @@ class Bomb(Combination):
         return a.value == b.value and a.value == c.value and a.value == d.value
 
     def beats(
-        self, their_combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
         if not isinstance(their_combination, Bomb):
             return False
@@ -419,7 +438,9 @@ class StraightBomb(Combination):
         return True
 
     def beats(
-        self, their_combination: Combination, previous_combination: Combination | None = None
+        self,
+        their_combination: Combination,
+        previous_combination: Combination | None = None,
     ) -> bool:
         if not isinstance(their_combination, StraightBomb):
             return False
@@ -489,7 +510,7 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 
 if __name__ == "__main__":
-    x = card_ids_to_combination(["black_a", "black_a", "green_a", "red_2", "black_2"])
+    x = card_ids_to_combination(["green_2", "red_4", "black_5", "green_3", "red_6", "red_7", "blue_9", "black_10", "red_8"])
     print(x)
     """ x = card_ids_to_combination(["black_a", "phoenix", "green_2", "red_2", "black_2"])
     print(x)
