@@ -502,7 +502,7 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
     cards = get_cards_from_card_ids(card_ids)
 
     for combination in COMBINATIONS:
-        if combination.min_cards_required >= len(cards):
+        if combination.min_cards_required <= len(cards):
             try:
                 return combination.from_cards(cards)
             except InvalidCombinationException:
@@ -510,7 +510,7 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 
 if __name__ == "__main__":
-    x = card_ids_to_combination(["green_2", "red_4", "black_5", "green_3", "red_6", "red_7", "blue_9", "black_10", "red_8"])
+    x = card_ids_to_combination(["green_2", "red_4", "black_5", "green_3", "red_6", "phoenix", "blue_9", "black_10", "red_8"])
     print(x)
     """ x = card_ids_to_combination(["black_a", "phoenix", "green_2", "red_2", "black_2"])
     print(x)
