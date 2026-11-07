@@ -87,6 +87,9 @@ class Player(Entity):
             "game": game_state,
             "player": self.get_private_state() | self.get_public_state(),
         }
+        
+        print(state)
+        
         await self.client.send(json.dumps(state))
 
 

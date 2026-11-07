@@ -253,7 +253,7 @@ class Straight(Combination):
     min_cards_required = 5
 
     def json(self) -> Any:
-        return (card.card_id for card in self.cards)
+        return [card.card_id for card in self.cards]
 
     def verify(self) -> bool:
         has_phoenix, phoenix_index = contains_phoenix(self.cards)
@@ -263,7 +263,7 @@ class Straight(Combination):
             phoenix = self.cards.pop(phoenix_index)
 
         start_value = None
-
+        
         for i, card in enumerate(self.cards):
             if start_value is not None and card.value != start_value + 1:
                 if phoenix is None:
@@ -301,7 +301,7 @@ class Straight(Combination):
     def from_cards(cls, cards: list[Card]) -> Self:
         if len(cards) < cls.min_cards_required:
             raise InvalidCombinationException()
-
+        
         straight = cls(sorted(cards, key=lambda card: card.value))
 
         if not straight.verify():
@@ -357,13 +357,14 @@ class PairStraight(Combination):
         if len(cards) < cls.min_cards_required:
             raise InvalidCombinationException()
 
-        has_phoenix, phoenix_index = contains_phoenix(cards)
+        sorted_cards = sorted(cards, key=lambda card: card.value)
+        
+        has_phoenix, phoenix_index = contains_phoenix(sorted_cards)
         phoenix = None
 
         if has_phoenix:
-            phoenix = cards.pop(phoenix_index)
+            phoenix = sorted_cards.pop(phoenix_index)
 
-        sorted_cards = sorted(cards, key=lambda card: card.value)
 
         pairs = []
 
@@ -524,12 +525,11 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 
 if __name__ == "__main__":
-    x = card_ids_to_combination(
-        ["green_3", "phoenix", "blue_4", "green_5", "red_5", "blue_4"]
-    )
     y = card_ids_to_combination(
-        ["green_6", "red_6", "blue_4", "green_5", "red_5", "blue_4"]
+        ["blue_2","green_3","red_4","red_5","phoenix","green_7"]
     )
+    
+    print(y)
     """ x = card_ids_to_combination(["black_a", "phoenix", "green_2", "red_2", "black_2"])
     print(x)
     x = card_ids_to_combination(["black_a", "green_a", "phoenix", "red_2", "black_2"])
