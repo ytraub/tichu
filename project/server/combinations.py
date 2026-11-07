@@ -263,7 +263,7 @@ class Straight(Combination):
             phoenix = self.cards.pop(phoenix_index)
 
         start_value = None
-        
+
         for i, card in enumerate(self.cards):
             if start_value is not None and card.value != start_value + 1:
                 if phoenix is None:
@@ -301,7 +301,7 @@ class Straight(Combination):
     def from_cards(cls, cards: list[Card]) -> Self:
         if len(cards) < cls.min_cards_required:
             raise InvalidCombinationException()
-        
+
         straight = cls(sorted(cards, key=lambda card: card.value))
 
         if not straight.verify():
@@ -354,17 +354,16 @@ class PairStraight(Combination):
 
     @classmethod
     def from_cards(cls, cards: list[Card]) -> Self:
-        if len(cards) < cls.min_cards_required:
+        if len(cards) < cls.min_cards_required or len(cards) % 2 != 0:
             raise InvalidCombinationException()
 
         sorted_cards = sorted(cards, key=lambda card: card.value)
-        
+
         has_phoenix, phoenix_index = contains_phoenix(sorted_cards)
         phoenix = None
 
         if has_phoenix:
             phoenix = sorted_cards.pop(phoenix_index)
-
 
         pairs = []
 
@@ -526,9 +525,9 @@ def card_ids_to_combination(card_ids: list[str]) -> Combination | None:
 
 if __name__ == "__main__":
     y = card_ids_to_combination(
-        ["blue_2","green_3","red_4","red_5","phoenix","green_7"]
+        ["blue_2", "green_3", "red_4", "red_5", "phoenix", "green_7"]
     )
-    
+
     print(y)
     """ x = card_ids_to_combination(["black_a", "phoenix", "green_2", "red_2", "black_2"])
     print(x)
