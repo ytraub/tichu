@@ -39,6 +39,7 @@ class Game {
         this.ctx = this.canvas.getContext("2d");
 
         this.cards = undefined;
+        this.backside = undefined;
 
         this.state = undefined;
         this.hand = undefined;
@@ -156,8 +157,10 @@ class Game {
 
     async init() {
         const [cards] = await resources.load("/img/cards.png");
-
         this.cards = cards;
+
+        const [backside] = await resources.load("/img/backside.png");
+        this.backside = backside;
 
         this.canvas.height = CANVAS_HEIGHT;
         this.canvas.width = CANVAS_WIDTH;
@@ -297,6 +300,7 @@ class Game {
         const { x, y } = card.getOrigin()
 
         this.ctx.drawImage(this.cards, x, y, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
+        //this.ctx.drawImage(this.backside, 0, 0, 160, 247, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
     }
 
     renderCardList(card_list, center_x, center_y) {
