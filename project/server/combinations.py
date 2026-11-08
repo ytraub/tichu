@@ -8,8 +8,8 @@ from utils import InvalidCombinationException, list_subtraction
 class Combination:
     min_cards_required: int
 
-    def json(self) -> Any:
-        return ""
+    def json(self) -> list[Any]:
+        return []
 
     def verify(self) -> bool:
         return False
@@ -29,7 +29,7 @@ class Single(Combination):
     card: Card
     min_cards_required = 1
 
-    def json(self) -> Any:
+    def json(self) -> list[Any]:
         return [self.card.card_id]
 
     def verify(self) -> bool:
@@ -67,10 +67,10 @@ class Pair(Combination):
     cards: tuple[Card, Card]
     min_cards_required = 2
 
-    def json(self) -> Any:
+    def json(self) -> list[Any]:
         a, b = self.cards
 
-        return (a.card_id, b.card_id)
+        return [a.card_id, b.card_id]
 
     def verify(self) -> bool:
         a, b = self.cards
@@ -114,10 +114,10 @@ class ThreeOfAKind(Combination):
     cards: tuple[Card, Card, Card]
     min_cards_required = 3
 
-    def json(self) -> Any:
+    def json(self) -> list[Any]:
         a, b, c = self.cards
 
-        return (a.card_id, b.card_id, c.card_id)
+        return [a.card_id, b.card_id, c.card_id]
 
     def verify(self) -> bool:
         without_phoenix = get_card_list_without_phoenix(list(self.cards))
@@ -158,8 +158,8 @@ class FullHouse(Combination):
     three_of_a_kind: ThreeOfAKind
     min_cards_required = 5
 
-    def json(self) -> Any:
-        return (self.three_of_a_kind.json(), self.pair.json())
+    def json(self) -> list[Any]:
+        return [*self.three_of_a_kind.json(), *self.pair.json()]
 
     def verify(self) -> bool:
         return self.pair.verify() and self.three_of_a_kind.verify()
@@ -252,7 +252,7 @@ class Straight(Combination):
     cards: list[Card]
     min_cards_required = 5
 
-    def json(self) -> Any:
+    def json(self) -> list[Any]:
         return [card.card_id for card in self.cards]
 
     def verify(self) -> bool:
@@ -315,8 +315,8 @@ class PairStraight(Combination):
     cards: list[Pair]
     min_cards_required = 4
 
-    def json(self) -> Any:
-        return [pair.json() for pair in self.cards]
+    def json(self) -> list[Any]:
+        return [item for pair in self.cards for item in pair.json()]
 
     def verify(self) -> bool:
         if len(self.cards) < 2:
@@ -393,10 +393,10 @@ class Bomb(Combination):
     cards: tuple[Card, Card, Card, Card]
     min_cards_required = 4
 
-    def json(self) -> Any:
+    def json(self) -> list[Any]:
         a, b, c, d = self.cards
 
-        return (a.card_id, b.card_id, c.card_id, d.card_id)
+        return [a.card_id, b.card_id, c.card_id, d.card_id]
 
     def verify(self) -> bool:
         a, b, c, d = self.cards
@@ -434,8 +434,8 @@ class StraightBomb(Combination):
     cards: list[Card]
     min_cards_required = 5
 
-    def json(self) -> Any:
-        return (card.card_id for card in self.cards)
+    def json(self) -> list[Any]:
+        return [card.card_id for card in self.cards]
 
     def verify(self) -> bool:
         if len(self.cards) < 5:

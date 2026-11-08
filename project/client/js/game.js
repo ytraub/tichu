@@ -26,10 +26,19 @@ class Game {
         this.passButton = document.getElementById("pass_btn");
         this.passButton.onclick = (event) => this.onPass(event);
 
+        this.sortByValueButton = document.getElementById("sort_by_value_btn");
+        this.sortByValueButton.onclick = (event) => this.onSortByValue(event);
+        this.sortByColorButton = document.getElementById("sort_by_color_btn");
+        this.sortByColorButton.onclick = (event) => this.onSortByColor(event);
+
+        this.sortByFn = this.sortHandByValue
+
         this.teamsDebug = document.getElementById("teams_debug")
         this.entityTurnIdDebug = document.getElementById("entity_turn_id_debug")
 
         this.ctx = this.canvas.getContext("2d");
+
+        this.cards = undefined;
 
         this.state = undefined;
         this.hand = undefined;
@@ -66,6 +75,8 @@ class Game {
         this.entityTurnId = state.game.entity_turn_id;
         this.discardPile = state.game.discard_pile;
         this.currentCombination = state.game.current_combination;
+
+        this.sortByFn()
     }
 
     async onSocketClose(event) {
@@ -91,6 +102,37 @@ class Game {
         }
 
         this.socket.send(JSON.stringify(payload))
+    }
+
+    onSortByValue(event) {
+        this.sortByFn = this.sortHandByValue
+    }
+
+    onSortByColor(event) {
+        this.sortByFn = this.sortHandByColor
+    }
+
+    sortHandByValue(event) {
+        if (!this.state) return;
+
+        this.hand.sort((a, b) => CARD_MAP.get(a).value - CARD_MAP.get(b).value)
+    }
+
+    sortHandByColor(event) {
+        if (!this.state) return;
+
+        this.hand.sort((a, b) => {
+            const card_a = CARD_MAP.get(a)
+            const card_b = CARD_MAP.get(b)
+
+            const cmp = card_a.color.localeCompare(card_b.color)
+
+            if (cmp == 0) {
+                return card_a.value - card_b.value
+            }
+
+            return cmp
+        })
     }
 
     async startGame(event) {
@@ -175,6 +217,10 @@ class Game {
 
     update() {
         this.startGameButton.disabled = this.isRunning;
+
+        this.sortByColorButton.disabled = !this.isRunning;
+        this.sortByValueButton.disabled = !this.isRunning;
+
         this.playCardButton.disabled = this.id !== this.entityTurnId
         this.passButton.disabled = this.id !== this.entityTurnId
     }
