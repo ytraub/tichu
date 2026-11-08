@@ -47,8 +47,11 @@ canvas {
     padding-top: 2rem;
 
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+}
 
+.sort_by {
+    display: flex;
     gap: 1rem;
 }
