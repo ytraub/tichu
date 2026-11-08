@@ -368,14 +368,17 @@ class PairStraight(Combination):
         pairs = []
 
         for i in range(0, len(sorted_cards), 2):
-            if sorted_cards[i].value != sorted_cards[i + 1].value:
-                if phoenix is None:
-                    raise InvalidCombinationException()
+            try:
+                if sorted_cards[i].value != sorted_cards[i + 1].value:
+                    if phoenix is None:
+                        raise InvalidCombinationException()
 
-                sorted_cards.insert(i + 1, phoenix)
-                phoenix = None
+                    sorted_cards.insert(i + 1, phoenix)
+                    phoenix = None
 
-            pairs.append(Pair.from_cards([sorted_cards[i], sorted_cards[i + 1]]))
+                pairs.append(Pair.from_cards([sorted_cards[i], sorted_cards[i + 1]]))
+            except IndexError:
+                raise InvalidCombinationException()
 
         combination = cls(pairs)
 

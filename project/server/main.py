@@ -71,9 +71,6 @@ class Entity:
     async def send_state(self, game_state: Any) -> None:
         pass
 
-    def choose_action(self) -> dict[str, Any]:
-        pass
-
 
 class Player(Entity):
     client: websockets.ServerConnection
@@ -87,9 +84,7 @@ class Player(Entity):
             "game": game_state,
             "player": self.get_private_state() | self.get_public_state(),
         }
-        
-        print(state)
-        
+
         await self.client.send(json.dumps(state))
 
 
@@ -97,7 +92,7 @@ class Bot(Entity):
     def __init__(self) -> None:
         super().__init__(str(uuid.uuid4()), [], True)
 
-    def choose_action(self, game) -> dict[str, Any] :
+    def choose_action(self, game) -> dict[str, Any]:
         legal: list[list[str]] = []
 
         for size in range(1, len(self.hand) + 1):
@@ -118,6 +113,7 @@ class Bot(Entity):
             return {"pass": True}
 
         return {"played_cards": random.choice(legal)}
+
 
 class Game:
     def __init__(self) -> None:
@@ -262,12 +258,12 @@ class Game:
             self.current_combination, self.stack[-1] if len(self.stack) > 0 else None
         ):
             raise LowCombinationException
-        
+
         return combination
 
     def try_play_cards(self, entity: Entity, card_ids: list[str]) -> None:
         combination = self.can_play(entity.hand, card_ids)
-        
+
         if self.current_combination:
             self.stack.append(self.current_combination)
 
@@ -277,6 +273,9 @@ class Game:
             entity.hand.remove(card)
 
     def queue_bot_action(self) -> None:
+        if self.entity_turn_id is None:
+            return
+
         bot = self.get_entity_by_id(self.entity_turn_id)
 
         if not isinstance(bot, Bot):
