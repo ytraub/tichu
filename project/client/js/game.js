@@ -6,10 +6,14 @@ const CANVAS_HEIGHT = 800
 
 const CARD_WIDTH = 48
 const CARD_HEIGHT = 64
-
-const PADDING = 20
 const CARD_PADDING = 5
 const CARD_BORDER = 2
+
+const BACKSIDE_WIDTH = CARD_WIDTH * 0.7
+const BACKSIDE_HEIGHT = CARD_HEIGHT * 0.7
+const BACKSIDE_PADDING = CARD_PADDING * 0.7
+
+const PADDING = 20
 
 const SOCKET_PORT = 5400
 
@@ -175,6 +179,21 @@ class Game {
             y: this.canvas.height - 50 - PADDING
         };
 
+        this.mateHandCenter = {
+            x: this.canvas.width / 2,
+            y: 50 + PADDING
+        }
+
+        this.leftOpponentHandCenter = {
+            x: 50 + PADDING,
+            y: this.canvas.height / 2
+        }
+
+        this.rightOpponentHandCenter = {
+            x: this.canvas.width - 50 - PADDING,
+            y: this.canvas.height / 2
+        }
+
         this.initInput();
 
         requestAnimationFrame((time) => {
@@ -234,18 +253,20 @@ class Game {
         if (!this.state) return;
 
         this.renderCurrentCombination();
-        this.renderHand();
+        this.renderPlayerHand();
+        this.renderBacksides();
+
         this.renderDiscardPile();
         this.debug();
     }
 
-    getCardListOrigin(card_list, x, y) {
-        return { x: x - (card_list.length / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
+    getCardListOrigin(len, x, y) {
+        return { x: x - (len / 2 * (CARD_WIDTH + CARD_PADDING)), y: y - CARD_HEIGHT / 2 }
     }
 
     getHandOrigin() {
         const { x, y } = this.playerHandCenter
-        return this.getCardListOrigin(this.hand, x, y)
+        return this.getCardListOrigin(this.hand.length, x, y)
     }
 
     getDiscardPileOrigin() {
@@ -300,11 +321,10 @@ class Game {
         const { x, y } = card.getOrigin()
 
         this.ctx.drawImage(this.cards, x, y, ORIGIN_CARD_WIDTH, ORIGIN_CARD_HEIGHT, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
-        //this.ctx.drawImage(this.backside, 0, 0, 160, 247, pos_x, pos_y, CARD_WIDTH, CARD_HEIGHT);
     }
 
     renderCardList(card_list, center_x, center_y) {
-        const { x, y } = this.getCardListOrigin(card_list, center_x, center_y)
+        const { x, y } = this.getCardListOrigin(card_list.length, center_x, center_y)
 
         for (const [i, id] of card_list.entries()) {
             const pos_x = x + (i * (CARD_WIDTH + CARD_PADDING))
@@ -318,7 +338,7 @@ class Game {
         }
     }
 
-    renderHand() {
+    renderPlayerHand() {
         if (!this.state) return
 
         const { x, y } = this.playerHandCenter
@@ -332,6 +352,33 @@ class Game {
         const { x, y } = this.getDiscardPileOrigin()
 
         this.renderCardList(this.discardPile, x, y)
+    }
+
+    getBacksideCardListOrigin(len, x, y) {
+        return { x: x - (len / 2 * (BACKSIDE_WIDTH + BACKSIDE_PADDING)), y: y - BACKSIDE_HEIGHT / 2 }
+    }
+
+    renderBacksideCard(pos_x, pos_y) {
+        this.ctx.drawImage(this.backside, 0, 0, 160, 247, pos_x, pos_y, BACKSIDE_WIDTH, BACKSIDE_HEIGHT);
+    }
+
+    renderBacksideCardList(amount, center_x, center_y) {
+        const { x, y } = this.getBacksideCardListOrigin(amount, center_x, center_y)
+
+        for (let i = 0; i < amount; i++) {
+            const pos_x = x + (i * (BACKSIDE_WIDTH + BACKSIDE_PADDING))
+            const pos_y = y
+
+            this.renderBacksideCard(pos_x, pos_y)
+        }
+    }
+
+    renderBacksides() {
+        const { x: mate_x, y: mate_y } = this.mateHandCenter
+        const { x: left_x, y: left_y } = this.leftOpponentHandCenter
+        const { x: right_x, y: right_y } = this.rightOpponentHandCenter
+
+        this.renderBacksideCardList(14, mate_x, mate_y);
     }
 
     clearScreen() {
