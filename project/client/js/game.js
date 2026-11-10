@@ -82,6 +82,9 @@ class Game {
         this.discardPile = state.game.discard_pile;
         this.currentCombination = state.game.current_combination;
 
+        this.public = state.game.public;
+        console.log(this.public)
+
         this.sortByFn()
     }
 

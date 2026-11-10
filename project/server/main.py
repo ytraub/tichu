@@ -158,7 +158,7 @@ class Game:
                 if self.current_combination is not None
                 else None
             ),
-            "public_state": public_state,
+            "public": public_state,
         }
 
     def get_entity_by_id(self, id: str) -> Entity | None:
