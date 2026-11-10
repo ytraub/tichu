@@ -62,7 +62,7 @@ class Entity:
     def get_public_state(self) -> dict[str, Any]:
         return {
             "id": self.id,
-            "cards_amount": len(self.hand),
+            "card_amount": len(self.hand),
             "team_key": self.team_key,
             "player_key": self.player_key,
         }

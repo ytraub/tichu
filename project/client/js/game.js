@@ -50,6 +50,11 @@ class Game {
         this.hand = undefined;
         this.id = undefined;
 
+        this.selfPublicState = undefined;
+        this.matePublicState = undefined;
+        this.leftOpponentPublicState = undefined;
+        this.rightOpponentPublicState = undefined;
+
         this.isRunning = false;
         this.teams = undefined;
         this.entityTurnId = undefined;
@@ -69,6 +74,40 @@ class Game {
         console.log("Connected");
     }
 
+    handlePublicState(players) {
+        this.selfPublicState = players.find(
+            player => player.id === this.id
+        );
+
+        this.matePublicState = null;
+        this.leftOpponentPublicState = null;
+        this.rightOpponentPublicState = null;
+
+        if (!this.selfPublicState) return;
+
+        const { team_key: selfPlayerKey, player_key: selfTeamKey } = this.selfPublicState;
+        const isTeamA = selfTeamKey === "a";
+
+        for (const player of players) {
+            if (player.id === this.id) continue;
+
+            if (player.team_key === selfTeamKey) {
+                this.matePublicState = player;
+                continue;
+            }
+
+            const isSamePlayer = player.player_key === selfPlayerKey;
+
+            const isRightOpponent = isSamePlayer === isTeamA;
+
+            if (isRightOpponent) {
+                this.rightOpponentPublicState = player;
+            } else {
+                this.leftOpponentPublicState = player;
+            }
+        }
+    }
+
     async onSocketMessage(event) {
         const state = JSON.parse(event.data);
         this.state = state;
@@ -82,9 +121,7 @@ class Game {
         this.discardPile = state.game.discard_pile;
         this.currentCombination = state.game.current_combination;
 
-        this.public = state.game.public;
-        console.log(this.public)
-
+        this.handlePublicState(state.game.public)
         this.sortByFn()
     }
 
@@ -377,7 +414,7 @@ class Game {
             this.ctx.drawImage(this.backsideVertical, 0, 0, 247, 160, pos_x, pos_y, BACKSIDE_HEIGHT, BACKSIDE_WIDTH);
             return;
         }
-        
+
         this.ctx.drawImage(this.backside, 0, 0, 160, 247, pos_x, pos_y, BACKSIDE_WIDTH, BACKSIDE_HEIGHT);
     }
 
@@ -393,13 +430,15 @@ class Game {
     }
 
     renderBacksides() {
+        if (!(!!this.matePublicState && !!this.leftOpponentPublicState && !!this.rightOpponentPublicState)) return
+
         const { x: mate_x, y: mate_y } = this.mateHandCenter
         const { x: left_x, y: left_y } = this.leftOpponentHandCenter
         const { x: right_x, y: right_y } = this.rightOpponentHandCenter
 
-        this.renderBacksideCardList(14, mate_x, mate_y);
-        this.renderBacksideCardList(14, left_x, left_y, true);
-        this.renderBacksideCardList(14, right_x, right_y, true);
+        this.renderBacksideCardList(this.matePublicState.card_amount, mate_x, mate_y);
+        this.renderBacksideCardList(this.leftOpponentPublicState.card_amount, left_x, left_y, true);
+        this.renderBacksideCardList(this.rightOpponentPublicState.card_amount, right_x, right_y, true);
     }
 
     clearScreen() {
