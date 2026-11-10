@@ -44,6 +44,7 @@ class Game {
 
         this.cards = undefined;
         this.backside = undefined;
+        this.backsideVertical = undefined;
 
         this.state = undefined;
         this.hand = undefined;
@@ -165,6 +166,9 @@ class Game {
 
         const [backside] = await resources.load("/img/backside.png");
         this.backside = backside;
+
+        const [backside_vertical] = await resources.load("/img/backside_vertical.png");
+        this.backsideVertical = backside_vertical;
 
         this.canvas.height = CANVAS_HEIGHT;
         this.canvas.width = CANVAS_WIDTH;
@@ -354,22 +358,34 @@ class Game {
         this.renderCardList(this.discardPile, x, y)
     }
 
-    getBacksideCardListOrigin(len, x, y) {
-        return { x: x - (len / 2 * (BACKSIDE_WIDTH + BACKSIDE_PADDING)), y: y - BACKSIDE_HEIGHT / 2 }
+    getBacksideCardListOrigin(len, x, y, vertcial = false) {
+        const width = (len / 2 * (BACKSIDE_WIDTH + BACKSIDE_PADDING))
+        const height = BACKSIDE_HEIGHT / 2
+
+        if (vertcial) {
+            return { x: x - height, y: y - width }
+        }
+
+        return { x: x - width, y: y - height }
     }
 
-    renderBacksideCard(pos_x, pos_y) {
+    renderBacksideCard(pos_x, pos_y, vertical = false) {
+        if (vertical) {
+            this.ctx.drawImage(this.backsideVertical, 0, 0, 247, 160, pos_x, pos_y, BACKSIDE_HEIGHT, BACKSIDE_WIDTH);
+            return;
+        }
+        
         this.ctx.drawImage(this.backside, 0, 0, 160, 247, pos_x, pos_y, BACKSIDE_WIDTH, BACKSIDE_HEIGHT);
     }
 
-    renderBacksideCardList(amount, center_x, center_y) {
-        const { x, y } = this.getBacksideCardListOrigin(amount, center_x, center_y)
+    renderBacksideCardList(amount, center_x, center_y, vertical = false) {
+        const { x, y } = this.getBacksideCardListOrigin(amount, center_x, center_y, vertical)
 
         for (let i = 0; i < amount; i++) {
-            const pos_x = x + (i * (BACKSIDE_WIDTH + BACKSIDE_PADDING))
-            const pos_y = y
+            const pos_x = !vertical ? x + (i * (BACKSIDE_WIDTH + BACKSIDE_PADDING)) : x
+            const pos_y = !vertical ? y : y + (i * (BACKSIDE_WIDTH + BACKSIDE_PADDING))
 
-            this.renderBacksideCard(pos_x, pos_y)
+            this.renderBacksideCard(pos_x, pos_y, vertical)
         }
     }
 
@@ -379,6 +395,8 @@ class Game {
         const { x: right_x, y: right_y } = this.rightOpponentHandCenter
 
         this.renderBacksideCardList(14, mate_x, mate_y);
+        this.renderBacksideCardList(14, left_x, left_y, true);
+        this.renderBacksideCardList(14, right_x, right_y, true);
     }
 
     clearScreen() {
