@@ -6,7 +6,7 @@ import random
 
 import logging
 
-from typing import Any
+from typing import Any, Literal
 from dataclasses import dataclass
 
 from cards import Card, CARD_MAP
@@ -45,6 +45,9 @@ class Entity:
     hand: list[str]
     ready: bool = False
 
+    team_key: str
+    player_key: str
+
     def __init__(self, id, hand, ready) -> None:
         self.id = id
         self.hand = hand
@@ -57,7 +60,12 @@ class Entity:
         return self.ready
 
     def get_public_state(self) -> dict[str, Any]:
-        return {"id": self.id}
+        return {
+            "id": self.id,
+            "cards_amount": len(self.hand),
+            "team_key": self.team_key,
+            "player_key": self.player_key,
+        }
 
     def get_private_state(self) -> dict[str, Any]:
         return {"hand": self.hand}
@@ -67,6 +75,10 @@ class Entity:
 
     def set_hand(self, cardIds: list[str]) -> None:
         self.hand = cardIds
+
+    def set_keys(self, team_key: str, player_key: str) -> None:
+        self.team_key = team_key
+        self.player_key = player_key
 
     async def send_state(self, game_state: Any) -> None:
         pass
@@ -135,6 +147,7 @@ class Game:
 
     # Must be JSON serializable
     def state(self) -> Any:
+        public_state = [entity.get_public_state() for entity in self.entities]
 
         return {
             "is_running": self.is_running,
@@ -145,6 +158,7 @@ class Game:
                 if self.current_combination is not None
                 else None
             ),
+            "public_state": public_state,
         }
 
     def get_entity_by_id(self, id: str) -> Entity | None:
@@ -175,16 +189,26 @@ class Game:
         self.entity_turn_id = self.teams[team][entity]
         self.turn_count += 1
 
-    def add_entity_to_team(self, entity_id: str) -> None:
-        for team in self.teams.values():
-            for slot in team:
-                if team[slot] is None:
-                    team[slot] = entity_id
-                    return
+    def add_entity_to_team(self, entity_id: str) -> tuple[str, str] | None:
+        for team_key in self.teams:
+            team = self.teams[team_key]
+
+            for player_key in team:
+                if team[player_key] is None:
+                    team[player_key] = entity_id
+
+                    return (team_key, player_key)
 
     def add_entity(self, entity: Entity) -> None:
         self.entities.append(entity)
-        self.add_entity_to_team(entity.id)
+        keys = self.add_entity_to_team(entity.id)
+
+        if keys is None:
+            # Lobby full :(
+            return
+
+        team_key, player_key = keys
+        entity.set_keys(team_key, player_key)
 
     def remove_entity_from_team(self, entity_id: str) -> None:
         for team in self.teams.values():
