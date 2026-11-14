@@ -34,6 +34,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+
 class Game:
     def __init__(self) -> None:
         self.entities: list[Entity] = []
@@ -45,9 +46,11 @@ class Game:
         self.message_queue: list[Message] = list()
         self.is_running: bool = False
 
-        self.entity_turn_id = None
-        self.turn_count = 0
-        self.continous_pass_count = 0
+        self.move_count: int = 0
+        self.move_offset: int = 0
+        self.continous_pass_count: int = 0
+
+        self.current_move_idx: int | None = None
 
         self.stack: list[Combination] = []
         self.current_combination: Combination | None = None
@@ -58,7 +61,9 @@ class Game:
 
         return {
             "is_running": self.is_running,
-            "entity_turn_id": self.entity_turn_id,
+            "entity_at_move": (
+                MOVE_ORDER[self.current_move_idx] if self.current_move_idx else None
+            ),
             "teams": self.teams,
             "current_combination": (
                 self.current_combination.json()
@@ -75,6 +80,20 @@ class Game:
 
         return None
 
+    def get_entity_by_keys(self, keys: tuple[str, str]) -> Entity | None:
+        team_key, player_key = keys
+
+        entity_id = self.teams[team_key][player_key]
+        if not entity_id:
+            return
+
+        return self.get_entity_by_id(entity_id)
+
+    def get_entity_at_move(self) -> Entity | None:
+        if self.current_move_idx is None:
+            return None
+        return self.get_entity_by_keys(MOVE_ORDER[self.current_move_idx])
+
     def get_entities_amount(self) -> int:
         return len(self.entities)
 
@@ -85,16 +104,18 @@ class Game:
 
         return True
 
-    def next_turn(self) -> None:
-        if self.continous_pass_count == 3:
-            self.continous_pass_count = 0
-            self.current_combination = None
+    def set_starter(self) -> None:
+        if self.current_move_idx is None:
+            for entitiy in self.entities:
+                if entitiy.has_mahong():
+                    self.move_offset = MOVE_ORDER.index(
+                        (entitiy.team_key, entitiy.entity_key)
+                    )
 
-        team = "a" if self.turn_count % 2 == 0 else "b"
-        entity = "a" if self.turn_count % 4 < 2 else "b"
+                    self.move_count = 0
+                    self.current_move_idx = self.move_offset
 
-        self.entity_turn_id = self.teams[team][entity]
-        self.turn_count += 1
+                    break
 
     def add_entity_to_team(self, entity_id: str) -> tuple[str, str] | None:
         for team_key in self.teams:
@@ -131,28 +152,13 @@ class Game:
 
         self.remove_entity_from_team(entity.id)
 
-    async def client_recive(self, ws: websockets.ServerConnection) -> None:
-        player = Player(ws)
-        self.add_entity(player)
+    def next_turn(self) -> None:
+        if self.continous_pass_count == 3:
+            self.continous_pass_count = 0
+            self.current_combination = None
 
-        logger.info(f"{player.get_id()} connected")
-
-        try:
-            await player.send_state(self.state())
-
-            async for payload in ws:
-                logger.info(f"Recived: {payload}")
-
-                decoded = json.loads(payload)
-                message = Message(player.get_id(), decoded)
-
-                self.message_queue.append(message)
-
-        except websockets.ConnectionClosed:
-            pass
-
-        finally:
-            self.remove_entity(player)
+        self.move_count += 1
+        self.current_move_idx = (self.move_count + self.move_offset) % 4
 
     async def handle_lobby_messages(self) -> None:
         if not len(self.message_queue):
@@ -204,24 +210,22 @@ class Game:
             entity.hand.remove(card)
 
     def queue_bot_action(self) -> None:
-        if self.entity_turn_id is None:
+        entity = self.get_entity_at_move()
+
+        if not isinstance(entity, Bot):
             return
 
-        bot = self.get_entity_by_id(self.entity_turn_id)
-
-        if not isinstance(bot, Bot):
-            return
-
-        self.message_queue.append(Message(bot.get_id(), bot.choose_action(self)))
+        self.message_queue.append(Message(entity.get_id(), entity.choose_action(self)))
 
     async def handle_game_messages(self) -> None:
         if not len(self.message_queue):
             return
 
         message = self.message_queue.pop(0)
-        entity = self.get_entity_by_id(message.entity_id)
 
-        if not entity:
+        entity_at_move = self.get_entity_at_move()
+        entity = self.get_entity_by_id(message.entity_id)
+        if not entity or not entity_at_move or not entity.id == entity_at_move.id:
             return
 
         if message.payload.get("played_cards"):
@@ -260,9 +264,14 @@ class Game:
             entity.set_hand(hands[i])
 
     def init_game(self) -> None:
-        self.entity_turn_id = None
-        self.turn_count = 0
+        self.move_count = 0
+        self.move_offset = 0
+        self.continous_pass_count = 0
+
+        self.current_move_idx = None
+
         self.stack = []
+        self.current_combination = None
 
     async def start_game(self) -> None:
         self.init_game()
@@ -294,8 +303,7 @@ class Game:
         self.queue_bot_action()
 
     async def game_loop(self) -> None:
-
-        self.next_turn()
+        self.set_starter()
 
         while self.is_running:
             await self.update(UPDATE_RATE)
@@ -307,6 +315,29 @@ class Game:
                     self.remove_entity(entity)
 
             await asyncio.sleep(UPDATE_RATE)
+
+    async def client_recive(self, ws: websockets.ServerConnection) -> None:
+        player = Player(ws)
+        self.add_entity(player)
+
+        logger.info(f"{player.get_id()} connected")
+
+        try:
+            await player.send_state(self.state())
+
+            async for payload in ws:
+                logger.info(f"Recived: {payload}")
+
+                decoded = json.loads(payload)
+                message = Message(player.get_id(), decoded)
+
+                self.message_queue.append(message)
+
+        except websockets.ConnectionClosed:
+            pass
+
+        finally:
+            self.remove_entity(player)
 
 
 async def main():

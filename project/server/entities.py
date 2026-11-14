@@ -21,7 +21,7 @@ class Entity:
     ready: bool = False
 
     team_key: str
-    player_key: str
+    entity_key: str
 
     def __init__(self, id, hand, ready) -> None:
         self.id = id
@@ -39,7 +39,7 @@ class Entity:
             "id": self.id,
             "card_amount": len(self.hand),
             "team_key": self.team_key,
-            "player_key": self.player_key,
+            "entity_key": self.entity_key,
         }
 
     def has_mahong(self) -> bool:
@@ -54,9 +54,9 @@ class Entity:
     def set_hand(self, cardIds: list[str]) -> None:
         self.hand = cardIds
 
-    def set_keys(self, team_key: str, player_key: str) -> None:
+    def set_keys(self, team_key: str, entity_key: str) -> None:
         self.team_key = team_key
-        self.player_key = player_key
+        self.entity_key = entity_key
 
     async def send_state(self, game_state: Any) -> None:
         pass
