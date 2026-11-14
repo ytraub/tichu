@@ -25,6 +25,13 @@ SOCKET_PORT = 5400
 MIN_PLAYERS = 1
 MAX_PLAYERS = 4
 
+MOVE_ORDER: list[tuple[str, str]] = [
+    ("a", "a"),
+    ("b", "a"),
+    ("a", "b"),
+    ("b", "b")
+]
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     filename=".log",
@@ -66,6 +73,9 @@ class Entity:
             "team_key": self.team_key,
             "player_key": self.player_key,
         }
+        
+    def has_mahong(self) -> bool:
+        return "mahong" in self.hand
 
     def get_private_state(self) -> dict[str, Any]:
         return {"hand": self.hand}
@@ -387,6 +397,8 @@ class Game:
         self.queue_bot_action()
 
     async def game_loop(self) -> None:
+        
+        
         self.next_turn()
 
         while self.is_running:
