@@ -59,11 +59,21 @@ class Game:
     def state(self) -> Any:
         public_state = [entity.get_public_state() for entity in self.entities]
 
+        entity_at_move_keys = (
+            MOVE_ORDER[self.current_move_idx]
+            if self.current_move_idx is not None
+            else None
+        )
+        entity_at_move_id = (
+            self.get_entity_id_by_keys(entity_at_move_keys)
+            if entity_at_move_keys is not None
+            else None
+        )
+
         return {
             "is_running": self.is_running,
-            "entity_at_move": (
-                MOVE_ORDER[self.current_move_idx] if self.current_move_idx else None
-            ),
+            "entity_at_move_keys": entity_at_move_keys,
+            "entity_at_move_id": entity_at_move_id,
             "teams": self.teams,
             "current_combination": (
                 self.current_combination.json()
@@ -80,10 +90,14 @@ class Game:
 
         return None
 
-    def get_entity_by_keys(self, keys: tuple[str, str]) -> Entity | None:
+    def get_entity_id_by_keys(self, keys: tuple[str, str]) -> str | None:
         team_key, player_key = keys
 
-        entity_id = self.teams[team_key][player_key]
+        return self.teams[team_key][player_key]
+
+    def get_entity_by_keys(self, keys: tuple[str, str]) -> Entity | None:
+        entity_id = self.get_entity_id_by_keys(keys)
+
         if not entity_id:
             return
 

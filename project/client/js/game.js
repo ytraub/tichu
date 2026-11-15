@@ -17,6 +17,8 @@ const PADDING = 20
 
 const SOCKET_PORT = 5400
 
+const MOVE_ORDER = [["a", "a"], ["b", "a"], ["a", "b"], ["b", "b"]]
+
 class Game {
     constructor() {
         this.canvas = document.getElementById("canvas");
@@ -38,7 +40,7 @@ class Game {
         this.sortByFn = this.sortHandByValue
 
         this.teamsDebug = document.getElementById("teams_debug")
-        this.entityTurnIdDebug = document.getElementById("entity_turn_id_debug")
+        this.entityAtMoveKeysDebug = document.getElementById("entity_at_move_keys_debug")
 
         this.ctx = this.canvas.getContext("2d");
 
@@ -49,6 +51,7 @@ class Game {
         this.state = undefined;
         this.hand = undefined;
         this.id = undefined;
+        this.entityKeys = undefined;
 
         this.selfPublicState = undefined;
         this.matePublicState = undefined;
@@ -57,7 +60,8 @@ class Game {
 
         this.isRunning = false;
         this.teams = undefined;
-        this.entityTurnId = undefined;
+        this.entityAtMoveKeys = undefined;
+        this.entityAtMoveId = undefined;
         this.discardPile = undefined;
 
         this.selectedCards = new Set();
@@ -114,10 +118,12 @@ class Game {
 
         this.hand = state.player.hand;
         this.id = state.player.id;
-
+        this.entityKeys = [state.player.team_key, state.player.entity_key]
+        
         this.isRunning = state.game.is_running;
         this.teams = state.game.teams;
-        this.entityTurnId = state.game.entity_turn_id;
+        this.entityAtMoveKeys = state.game.entity_at_move_keys;
+        this.entityAtMoveId = state.game.entity_at_move_id;
         this.discardPile = state.game.discard_pile;
         this.currentCombination = state.game.current_combination;
 
@@ -197,7 +203,7 @@ class Game {
             `Team B: ${JSON.stringify(b, null, 2)}`;
 
 
-        this.entityTurnIdDebug.innerText = this.entityTurnId;
+        this.entityAtMoveKeysDebug.innerText = this.entityAtMoveKeys;
     }
 
     async init() {
@@ -287,8 +293,8 @@ class Game {
         this.sortByColorButton.disabled = !this.isRunning;
         this.sortByValueButton.disabled = !this.isRunning;
 
-        this.playCardButton.disabled = this.id !== this.entityTurnId
-        this.passButton.disabled = this.id !== this.entityTurnId
+        this.playCardButton.disabled = this.id !== this.entityAtMoveId
+        this.passButton.disabled = this.id !== this.entityAtMoveId
     }
 
     render() {
