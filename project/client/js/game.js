@@ -78,36 +78,33 @@ class Game {
         console.log("Connected");
     }
 
-    handlePublicState(players) {
-        this.selfPublicState = players.find(
-            player => player.id === this.id
-        );
-
+    handlePublicState(entities) {
         this.matePublicState = null;
         this.leftOpponentPublicState = null;
         this.rightOpponentPublicState = null;
 
-        if (!this.selfPublicState) return;
+        const { team_key: selfTeamKey, entity_key: selfPlayerKey } = this.entityKeys;
 
-        const { team_key: selfPlayerKey, player_key: selfTeamKey } = this.selfPublicState;
-        const isTeamA = selfTeamKey === "a";
+        const matePlayerKey = selfPlayerKey === "a" ? "b" : "a";
+        const opponentTeamKey = selfTeamKey === "a" ? "b" : "a";
 
-        for (const player of players) {
-            if (player.id === this.id) continue;
+        const leftOpponentPlayerKey = selfPlayerKey === "a"
+            ? (selfTeamKey === "a" ? "b" : "a")
+            : (selfTeamKey === "a" ? "a" : "b");
 
-            if (player.team_key === selfTeamKey) {
-                this.matePublicState = player;
-                continue;
-            }
+        const rightOpponentPlayerKey = selfPlayerKey === "a"
+            ? (selfTeamKey === "a" ? "a" : "b")
+            : (selfTeamKey === "a" ? "b" : "a");
 
-            const isSamePlayer = player.player_key === selfPlayerKey;
+        for (const entity of entities) {
+            const { team_key, entity_key } = entity;
 
-            const isRightOpponent = isSamePlayer === isTeamA;
-
-            if (isRightOpponent) {
-                this.rightOpponentPublicState = player;
-            } else {
-                this.leftOpponentPublicState = player;
+            if (team_key === selfTeamKey && entity_key === matePlayerKey) {
+                this.matePublicState = entity;
+            } else if (team_key === opponentTeamKey && entity_key === leftOpponentPlayerKey) {
+                this.leftOpponentPublicState = entity;
+            } else if (team_key === opponentTeamKey && entity_key === rightOpponentPlayerKey) {
+                this.rightOpponentPublicState = entity;
             }
         }
     }
@@ -118,8 +115,8 @@ class Game {
 
         this.hand = state.player.hand;
         this.id = state.player.id;
-        this.entityKeys = [state.player.team_key, state.player.entity_key]
-        
+        this.entityKeys = { team_key: state.player.team_key, entity_key: state.player.entity_key }
+
         this.isRunning = state.game.is_running;
         this.teams = state.game.teams;
         this.entityAtMoveKeys = state.game.entity_at_move_keys;
@@ -436,6 +433,7 @@ class Game {
     }
 
     renderBacksides() {
+        //console.log(this.matePublicState, this.leftOpponentPublicState, this.rightOpponentPublicState)
         if (!(!!this.matePublicState && !!this.leftOpponentPublicState && !!this.rightOpponentPublicState)) return
 
         const { x: mate_x, y: mate_y } = this.mateHandCenter
