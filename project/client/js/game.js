@@ -115,7 +115,7 @@ class Game {
 
         this.hand = state.player.hand;
         this.id = state.player.id;
-        this.entityKeys = { team_key: state.player.team_key, entity_key: state.player.entity_key }
+        this.entityKeys = { team_key: state.player.team_key, player_key: state.player.entity_key }
 
         this.isRunning = state.game.is_running;
         this.teams = state.game.teams;
