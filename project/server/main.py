@@ -11,6 +11,7 @@ from cards import CARD_MAP
 from combinations import card_ids_to_combination, Combination
 from utils import (
     Message,
+    GameState,
     CardsNotOnHandException,
     InvalidCombinationException,
     WrongCombinationException,
@@ -64,9 +65,16 @@ class Game:
             if self.current_move_idx is not None
             else None
         )
+
         entity_at_move_id = (
             self.get_entity_id_by_keys(entity_at_move_keys)
             if entity_at_move_keys is not None
+            else None
+        )
+
+        current_combination = (
+            self.current_combination.json()
+            if self.current_combination is not None
             else None
         )
 
@@ -75,11 +83,7 @@ class Game:
             "entity_at_move_keys": entity_at_move_keys,
             "entity_at_move_id": entity_at_move_id,
             "teams": self.teams,
-            "current_combination": (
-                self.current_combination.json()
-                if self.current_combination is not None
-                else None
-            ),
+            "current_combination": current_combination,
             "public": public_state,
         }
 

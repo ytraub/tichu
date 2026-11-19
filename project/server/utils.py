@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any
 from dataclasses import dataclass
 
@@ -6,6 +7,12 @@ from dataclasses import dataclass
 class Message:
     entity_id: str
     payload: Any
+
+
+class GameState(Enum):
+    LOBBY = 0
+    SCHUPFEN = 1
+    PLAYING = 2
 
 
 class CardsNotOnHandException(Exception):
