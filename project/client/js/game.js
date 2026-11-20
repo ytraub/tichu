@@ -17,36 +17,10 @@ const PADDING = 20
 
 const SOCKET_PORT = 5400
 
-const MOVE_ORDER = [["a", "a"], ["b", "a"], ["a", "b"], ["b", "b"]]
-
 class Game {
     constructor() {
-        this.canvas = document.getElementById("canvas");
-
-        this.lobbyButtons = document.getElementById("lobby_buttons");
-        this.schupfenButtons = document.getElementById("schupfen_buttons");
-        this.playingButtons = document.getElementById("playing_buttons");
-
-        this.startGameButton = document.getElementById("start_game_btn");
-        this.startGameButton.onclick = (event) => this.startGame(event);
-
-        this.playCardButton = document.getElementById("play_cards_btn");
-        this.playCardButton.onclick = (event) => this.onPlayCards(event);
-
-        this.passButton = document.getElementById("pass_btn");
-        this.passButton.onclick = (event) => this.onPass(event);
-
-        this.sortByValueButton = document.getElementById("sort_by_value_btn");
-        this.sortByValueButton.onclick = (event) => this.onSortByValue(event);
-        this.sortByColorButton = document.getElementById("sort_by_color_btn");
-        this.sortByColorButton.onclick = (event) => this.onSortByColor(event);
-
-        this.sortByFn = this.sortHandByValue
-
-        this.teamsDebug = document.getElementById("teams_debug")
-        this.entityAtMoveKeysDebug = document.getElementById("entity_at_move_keys_debug")
-
-        this.ctx = this.canvas.getContext("2d");
+        this.schupfenMode = undefined;
+        this.schupfen = { "left": undefined, "team": undefined, "right": undefined }
 
         this.cards = undefined;
         this.backside = undefined;
@@ -76,6 +50,39 @@ class Game {
         this.socket.onmessage = (event) => this.onSocketMessage(event);
         this.socket.onclose = (event) => this.onSocketClose(event);
         this.socket.onerror = (event) => this.onSocketError(event);
+
+        this.canvas = document.getElementById("canvas");
+        this.ctx = this.canvas.getContext("2d");
+
+        this.lobbyButtons = document.getElementById("lobby_buttons");
+        this.schupfenButtons = document.getElementById("schupfen_buttons");
+        this.playingButtons = document.getElementById("playing_buttons");
+
+        this.schupfenRightOpponentButton = document.getElementById("schupfen_right_opponent_btn");
+        this.schupfenRightOpponentButton.onclick = () => this.schupfenMode = "right"
+        this.schupfenTeammateButton = document.getElementById("schupfen_teammate_btn");
+        this.schupfenTeammateButton.onclick = () => this.schupfenMode = "team"
+        this.schupfenLeftOpponentButton = document.getElementById("schupfen_left_opponent_btn");
+        this.schupfenLeftOpponentButton.onclick = () => this.schupfenMode = "left"
+
+        this.startGameButton = document.getElementById("start_game_btn");
+        this.startGameButton.onclick = (event) => this.startGame(event);
+
+        this.playCardButton = document.getElementById("play_cards_btn");
+        this.playCardButton.onclick = (event) => this.onPlayCards(event);
+
+        this.passButton = document.getElementById("pass_btn");
+        this.passButton.onclick = (event) => this.onPass(event);
+
+        this.sortByValueButton = document.getElementById("sort_by_value_btn");
+        this.sortByValueButton.onclick = (event) => this.onSortByValue(event);
+        this.sortByColorButton = document.getElementById("sort_by_color_btn");
+        this.sortByColorButton.onclick = (event) => this.onSortByColor(event);
+
+        this.sortByFn = this.sortHandByValue
+
+        this.teamsDebug = document.getElementById("teams_debug")
+        this.entityAtMoveKeysDebug = document.getElementById("entity_at_move_keys_debug")
     }
 
     async onSocketOpen(event) {
@@ -289,9 +296,9 @@ class Game {
     }
 
     update() {
-        this.lobbyButtons.style.display = this.gameState === "LOBBY" ? "flex" : "none"
-        this.schupfenButtons.style.display = this.gameState === "SCHUPFEN" ? "flex" : "none"
-        this.playingButtons.style.display = this.gameState === "PLAYING" ? "flex" : "none"
+        this.lobbyButtons.style.display = "none"
+        this.schupfenButtons.style.display = "none"
+        this.playingButtons.style.display = "none"
 
         this.startGameButton.disabled = this.gameState !== "LOBBY";
 
@@ -300,6 +307,28 @@ class Game {
 
         this.playCardButton.disabled = this.id !== this.entityAtMoveId
         this.passButton.disabled = this.id !== this.entityAtMoveId
+
+        switch (this.gameState) {
+            case "LOBBY":
+                this.lobbyButtons.style.display = "flex"
+                break
+            case "SCHUPFEN":
+                this.schupfenButtons.style.display = "flex"
+
+                this.schupfenLeftOpponentButton.innerText = this.schupfen.left === undefined ? "Choose..." : this.schupfen.left
+                this.schupfenTeammateButton.innerText = this.schupfen.team === undefined ? "Choose..." : this.schupfen.team
+                this.schupfenRightOpponentButton.innerText = this.schupfen.right === undefined ? "Choose..." : this.schupfen.right
+
+                if (this.schupfenMode === undefined || this.selectedCards.size < 1) return
+
+                this.schupfen[this.schupfenMode] = this.selectedCards.keys().next().value
+                this.selectedCards.clear()
+                this.schupfenMode = undefined
+                break
+            case "PLAYING":
+                this.playingButtons.style.display = "flex"
+                break
+        }
     }
 
     render() {
