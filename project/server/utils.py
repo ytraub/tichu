@@ -10,9 +10,10 @@ class Message:
 
 
 class GameState(Enum):
-    LOBBY = 0
-    SCHUPFEN = 1
-    PLAYING = 2
+    INIT = 0
+    LOBBY = 1
+    SCHUPFEN = 2
+    PLAYING = 3
 
 
 class CardsNotOnHandException(Exception):

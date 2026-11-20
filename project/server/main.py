@@ -38,6 +38,8 @@ logging.basicConfig(
 
 class Game:
     def __init__(self) -> None:
+        self.game_state: GameState = GameState.INIT
+
         self.entities: list[Entity] = []
         self.teams: dict[str, dict[str, str | None]] = {
             "a": {"a": None, "b": None},
@@ -45,7 +47,6 @@ class Game:
         }
 
         self.message_queue: list[Message] = list()
-        self.is_running: bool = False
 
         self.move_count: int = 0
         self.move_offset: int = 0
@@ -79,7 +80,7 @@ class Game:
         )
 
         return {
-            "is_running": self.is_running,
+            "game_state": self.game_state.name,
             "entity_at_move_keys": entity_at_move_keys,
             "entity_at_move_id": entity_at_move_id,
             "teams": self.teams,
@@ -291,46 +292,42 @@ class Game:
         self.stack = []
         self.current_combination = None
 
-    async def start_game(self) -> None:
-        self.init_game()
-
-        def is_game_ready() -> bool:
-            return (
-                self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
-            )
-
-        # Wait for players and start when they are ready
-        logger.info("Waiting for players...")
-        while not is_game_ready():
-            await self.handle_lobby_messages()
-            await asyncio.sleep(0.1)
-
-        self.init_bots()
-        self.deal_cards()
-
-        logger.info("Starting...")
-
-        self.is_running = True
-        await self.game_loop()
-
-        # start new game
-        await self.start_game()
-
     async def update(self, dt) -> None:
         await self.handle_game_messages()
         self.queue_bot_action()
 
     async def game_loop(self) -> None:
-        self.set_starter()
+        def is_game_ready() -> bool:
+            return (
+                self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
+            )
 
-        while self.is_running:
-            await self.update(UPDATE_RATE)
+        while True:
+            match self.game_state:
+                case GameState.INIT:
+                    self.init_game()
+                    self.game_state = GameState.LOBBY
 
-            for entity in self.entities:
-                try:
-                    await entity.send_state(self.state())
-                except websockets.ConnectionClosed:
-                    self.remove_entity(entity)
+                case GameState.LOBBY:
+                    if is_game_ready():
+                        self.init_bots()
+                        self.deal_cards()
+                        self.game_state = GameState.SCHUPFEN
+
+                    await self.handle_lobby_messages()
+
+                case GameState.SCHUPFEN:
+                    self.game_state = GameState.PLAYING
+                case GameState.PLAYING:
+                    self.set_starter()
+
+                    await self.update(UPDATE_RATE)
+
+                    for entity in self.entities:
+                        try:
+                            await entity.send_state(self.state())
+                        except websockets.ConnectionClosed:
+                            self.remove_entity(entity)
 
             await asyncio.sleep(UPDATE_RATE)
 
@@ -367,7 +364,7 @@ async def main():
         SOCKET_PORT,
     ):
         print("Server listening on port", SOCKET_PORT)
-        await game.start_game()
+        await game.game_loop()
 
 
 if __name__ == "__main__":
