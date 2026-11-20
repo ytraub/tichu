@@ -179,20 +179,6 @@ class Game:
         self.move_count += 1
         self.current_move_idx = (self.move_count + self.move_offset) % 4
 
-    async def handle_lobby_messages(self) -> None:
-        if not len(self.message_queue):
-            return
-
-        message = self.message_queue.pop(0)
-        entity = self.get_entity_by_id(message.entity_id)
-
-        if not entity:
-            return
-
-        if message.payload.get("ready"):
-            logger.info(f"{entity.get_id()} is ready")
-            entity.set_ready(message.payload.get("ready"))
-
     def can_play(self, hand: list[str], card_ids: list[str]) -> Combination:
         if len(set(card_ids)) != len(card_ids):
             raise InvalidCombinationException
@@ -236,35 +222,56 @@ class Game:
 
         self.message_queue.append(Message(entity.get_id(), entity.choose_action(self)))
 
-    async def handle_game_messages(self) -> None:
+    async def handle_ws_in(self) -> None:
         if not len(self.message_queue):
             return
 
         message = self.message_queue.pop(0)
-
-        entity_at_move = self.get_entity_at_move()
         entity = self.get_entity_by_id(message.entity_id)
-        if not entity or not entity_at_move or not entity.id == entity_at_move.id:
+        if not entity:
             return
 
-        if message.payload.get("played_cards"):
-            selected_card_ids = message.payload["played_cards"]
+        entity_at_move = self.get_entity_at_move()
 
+        match self.game_state:
+            case GameState.LOBBY:
+                if message.payload.get("ready"):
+                    logger.info(f"{entity.get_id()} is ready")
+                    entity.set_ready(message.payload.get("ready"))
+
+            case GameState.SCHUPFEN:
+                pass
+
+            case GameState.PLAYING:
+                # Only continue if player is at move
+                if not entity_at_move or not entity.id == entity_at_move.id:
+                    return
+
+                if message.payload.get("played_cards"):
+                    selected_card_ids = message.payload["played_cards"]
+
+                    try:
+                        self.try_play_cards(entity, selected_card_ids)
+                    except InvalidCombinationException:
+                        return
+                    except CardsNotOnHandException:
+                        return
+
+                    # Go to the next player
+                    self.continous_pass_count = 0
+                    self.next_turn()
+
+                if message.payload.get("pass"):
+                    if message.payload.get("pass") is True:
+                        self.continous_pass_count += 1
+                        self.next_turn()
+
+    async def handle_ws_out(self) -> None:
+        for entity in self.entities:
             try:
-                self.try_play_cards(entity, selected_card_ids)
-            except InvalidCombinationException:
-                return
-            except CardsNotOnHandException:
-                return
-
-            # Go to the next player
-            self.continous_pass_count = 0
-            self.next_turn()
-
-        if message.payload.get("pass"):
-            if message.payload.get("pass") is True:
-                self.continous_pass_count += 1
-                self.next_turn()
+                await entity.send_state(self.state())
+            except websockets.ConnectionClosed:
+                self.remove_entity(entity)
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
@@ -282,21 +289,17 @@ class Game:
         for i, entity in enumerate(self.entities):
             entity.set_hand(hands[i])
 
-    def init_game(self) -> None:
-        self.move_count = 0
-        self.move_offset = 0
-        self.continous_pass_count = 0
-
-        self.current_move_idx = None
-
-        self.stack = []
-        self.current_combination = None
-
-    async def update(self, dt) -> None:
-        await self.handle_game_messages()
-        self.queue_bot_action()
-
     async def game_loop(self) -> None:
+        def init_game() -> None:
+            self.move_count = 0
+            self.move_offset = 0
+            self.continous_pass_count = 0
+
+            self.current_move_idx = None
+
+            self.stack = []
+            self.current_combination = None
+
         def is_game_ready() -> bool:
             return (
                 self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
@@ -305,7 +308,7 @@ class Game:
         while True:
             match self.game_state:
                 case GameState.INIT:
-                    self.init_game()
+                    init_game()
                     self.game_state = GameState.LOBBY
 
                 case GameState.LOBBY:
@@ -314,14 +317,13 @@ class Game:
                         self.deal_cards()
                         self.game_state = GameState.SCHUPFEN
 
-                    await self.handle_lobby_messages()
-
                 case GameState.SCHUPFEN:
-                    self.game_state = GameState.PLAYING
+                    pass
+                    # self.game_state = GameState.PLAYING
                 case GameState.PLAYING:
                     self.set_starter()
 
-                    await self.update(UPDATE_RATE)
+                    self.queue_bot_action()
 
                     for entity in self.entities:
                         try:
@@ -329,6 +331,8 @@ class Game:
                         except websockets.ConnectionClosed:
                             self.remove_entity(entity)
 
+            await self.handle_ws_in()
+            await self.handle_ws_out()
             await asyncio.sleep(UPDATE_RATE)
 
     async def client_recive(self, ws: websockets.ServerConnection) -> None:
