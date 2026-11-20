@@ -47,12 +47,18 @@ canvas {
     padding-top: 2rem;
 }
 
-#playing_buttons {
+#playing_buttons,
+#schupfen_buttons {
     width: 100%;
-    
+
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+#schupfen_buttons span {
+    display: flex;
+    gap: 1rem;
 }
 
 .sort_by {
