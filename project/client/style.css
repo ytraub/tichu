@@ -45,7 +45,11 @@ canvas {
 .action_bar {
     width: 100%;
     padding-top: 2rem;
+}
 
+#playing_buttons {
+    width: 100%;
+    
     display: flex;
     justify-content: space-between;
     align-items: center;

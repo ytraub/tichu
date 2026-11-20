@@ -23,6 +23,10 @@ class Game {
     constructor() {
         this.canvas = document.getElementById("canvas");
 
+        this.lobbyButtons = document.getElementById("lobby_buttons");
+        this.schupfenButtons = document.getElementById("schupfen_buttons");
+        this.playingButtons = document.getElementById("playing_buttons");
+
         this.startGameButton = document.getElementById("start_game_btn");
         this.startGameButton.onclick = (event) => this.startGame(event);
 
@@ -58,7 +62,7 @@ class Game {
         this.leftOpponentPublicState = undefined;
         this.rightOpponentPublicState = undefined;
 
-        this.isRunning = false;
+        this.gameState = undefined;
         this.teams = undefined;
         this.entityAtMoveKeys = undefined;
         this.entityAtMoveId = undefined;
@@ -117,7 +121,7 @@ class Game {
         this.id = state.player.id;
         this.entityKeys = { team_key: state.player.team_key, player_key: state.player.entity_key }
 
-        this.isRunning = state.game.is_running;
+        this.gameState = state.game.game_state;
         this.teams = state.game.teams;
         this.entityAtMoveKeys = state.game.entity_at_move_keys;
         this.entityAtMoveId = state.game.entity_at_move_id;
@@ -285,10 +289,14 @@ class Game {
     }
 
     update() {
-        this.startGameButton.disabled = this.isRunning;
+        this.lobbyButtons.style.display = this.gameState === "LOBBY" ? "flex" : "none"
+        this.schupfenButtons.style.display = this.gameState === "SCHUPFEN" ? "flex" : "none"
+        this.playingButtons.style.display = this.gameState === "PLAYING" ? "flex" : "none"
 
-        this.sortByColorButton.disabled = !this.isRunning;
-        this.sortByValueButton.disabled = !this.isRunning;
+        this.startGameButton.disabled = this.gameState !== "LOBBY";
+
+        this.sortByColorButton.disabled = this.gameState !== "PLAYING";
+        this.sortByValueButton.disabled = this.gameState !== "PLAYING";
 
         this.playCardButton.disabled = this.id !== this.entityAtMoveId
         this.passButton.disabled = this.id !== this.entityAtMoveId

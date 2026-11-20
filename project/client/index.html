@@ -15,16 +15,37 @@
         <div class="game">
             <canvas id="canvas"></canvas>
             <div class="action_bar">
-                <span>
+                <span id="lobby_buttons">
                     <button id="start_game_btn">Start Game</button>
-                    <button id="play_cards_btn">Play Cards</button>
-                    <button id="pass_btn">Pass</button>
                 </span>
-                <span class="sort_by">
-                    <p>Sort by</p>
+
+                <span id="playing_buttons">
                     <span>
-                        <button id="sort_by_value_btn">Value</button>
-                        <button id="sort_by_color_btn">Color</button>
+                        <button id="play_cards_btn">Play Cards</button>
+                        <button id="pass_btn">Pass</button>
+                    </span>
+
+                    <span class="sort_by">
+                        <p>Sort by</p>
+                        <span>
+                            <button id="sort_by_value_btn">Value</button>
+                            <button id="sort_by_color_btn">Color</button>
+                        </span>
+                    </span>
+                </span>
+
+                <span id="schupfen_buttons">
+                    <span>
+                        <p>Left Opponent</p>
+                        <button id="start_game_btn">Choose...</button>
+                    </span>
+                    <span>
+                        <p>Left Opponent</p>
+                        <button id="start_game_btn">Choose...</button>
+                    </span>
+                    <span>
+                        <p>Left Opponent</p>
+                        <button id="start_game_btn">Choose...</button>
                     </span>
                 </span>
             </div>
