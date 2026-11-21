@@ -19,6 +19,8 @@ const SOCKET_PORT = 5400
 
 class Game {
     constructor() {
+        this.socket = undefined;
+
         this.schupfenMode = undefined;
         this.schupfen = { "left": undefined, "team": undefined, "right": undefined }
 
@@ -46,13 +48,6 @@ class Game {
 
         this.selectedCards = new Set();
 
-        this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
-
-        this.socket.onopen = (event) => this.onSocketOpen(event);
-        this.socket.onmessage = (event) => this.onSocketMessage(event);
-        this.socket.onclose = (event) => this.onSocketClose(event);
-        this.socket.onerror = (event) => this.onSocketError(event);
-
         this.canvas = document.getElementById("canvas");
         this.ctx = this.canvas.getContext("2d");
 
@@ -68,9 +63,10 @@ class Game {
         this.schupfenLeftOpponentButton.onclick = () => this.schupfenMode = "left"
 
         this.schupfenSubmitButton = document.getElementById("schupfen_submit");
+        this.schupfenSubmitButton.onclick = (event) => this.onSchupfenSubmit(event);
 
         this.startGameButton = document.getElementById("start_game_btn");
-        this.startGameButton.onclick = (event) => this.startGame(event);
+        this.startGameButton.onclick = (event) => this.onStartGame(event);
 
         this.playCardButton = document.getElementById("play_cards_btn");
         this.playCardButton.onclick = (event) => this.onPlayCards(event);
@@ -88,6 +84,60 @@ class Game {
         this.teamsDebug = document.getElementById("teams_debug")
         this.entityAtMoveKeysDebug = document.getElementById("entity_at_move_keys_debug")
     }
+
+
+    async init() {
+        const [cards] = await resources.load("/img/cards.png");
+        this.cards = cards;
+
+        const [backside] = await resources.load("/img/backside.png");
+        this.backside = backside;
+
+        const [backside_vertical] = await resources.load("/img/backside_vertical.png");
+        this.backsideVertical = backside_vertical;
+
+        this.canvas.height = CANVAS_HEIGHT;
+        this.canvas.width = CANVAS_WIDTH;
+
+        this.discardPileCenter = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2
+        }
+
+        this.playerHandCenter = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height - 50 - PADDING
+        };
+
+        this.mateHandCenter = {
+            x: this.canvas.width / 2,
+            y: 50 + PADDING
+        }
+
+        this.leftOpponentHandCenter = {
+            x: 50 + PADDING,
+            y: this.canvas.height / 2
+        }
+
+        this.rightOpponentHandCenter = {
+            x: this.canvas.width - 50 - PADDING,
+            y: this.canvas.height / 2
+        }
+
+        this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
+
+        this.socket.onopen = (event) => this.onSocketOpen(event);
+        this.socket.onmessage = (event) => this.onSocketMessage(event);
+        this.socket.onclose = (event) => this.onSocketClose(event);
+        this.socket.onerror = (event) => this.onSocketError(event);
+
+        this.initInput();
+
+        /* requestAnimationFrame((time) => {
+            this.gameLoop(time);
+        }); */
+    }
+
 
     async onSocketOpen(event) {
         console.log("Connected");
@@ -170,8 +220,24 @@ class Game {
         this.socket.send(JSON.stringify(payload))
     }
 
-    async onSubmitSchupfen(event) {
+    async onStartGame(event) {
+        const payload = {
+            "ready": true
+        }
 
+        this.socket.send(JSON.stringify(payload))
+    }
+
+    async onSchupfenSubmit(event) {
+        if (Object.values(this.schupfen).some(value => value === undefined)) return;
+
+        const payload = {
+            [this.matePublicState.id]: this.schupfen.team,
+            [this.leftOpponentPublicState.id]: this.schupfen.left,
+            [this.rightOpponentPublicState.id]: this.schupfen.right
+        };
+
+        this.socket.send(JSON.stringify(payload))
     }
 
     onSortByValue(event) {
@@ -205,14 +271,6 @@ class Game {
         })
     }
 
-    async startGame(event) {
-        const payload = {
-            "ready": true
-        }
-
-        this.socket.send(JSON.stringify(payload))
-    }
-
     debug() {
         const { a, b } = this.teams;
 
@@ -222,51 +280,6 @@ class Game {
 
 
         this.entityAtMoveKeysDebug.innerText = this.entityAtMoveKeys;
-    }
-
-    async init() {
-        const [cards] = await resources.load("/img/cards.png");
-        this.cards = cards;
-
-        const [backside] = await resources.load("/img/backside.png");
-        this.backside = backside;
-
-        const [backside_vertical] = await resources.load("/img/backside_vertical.png");
-        this.backsideVertical = backside_vertical;
-
-        this.canvas.height = CANVAS_HEIGHT;
-        this.canvas.width = CANVAS_WIDTH;
-
-        this.discardPileCenter = {
-            x: this.canvas.width / 2,
-            y: this.canvas.height / 2
-        }
-
-        this.playerHandCenter = {
-            x: this.canvas.width / 2,
-            y: this.canvas.height - 50 - PADDING
-        };
-
-        this.mateHandCenter = {
-            x: this.canvas.width / 2,
-            y: 50 + PADDING
-        }
-
-        this.leftOpponentHandCenter = {
-            x: 50 + PADDING,
-            y: this.canvas.height / 2
-        }
-
-        this.rightOpponentHandCenter = {
-            x: this.canvas.width - 50 - PADDING,
-            y: this.canvas.height / 2
-        }
-
-        this.initInput();
-
-        /* requestAnimationFrame((time) => {
-            this.gameLoop(time);
-        }); */
     }
 
     initInput() {
