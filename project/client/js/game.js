@@ -42,6 +42,8 @@ class Game {
         this.entityAtMoveId = undefined;
         this.discardPile = undefined;
 
+        this.debugMode = false;
+
         this.selectedCards = new Set();
 
         this.socket = new WebSocket(`ws://localhost:${SOCKET_PORT}`);
@@ -164,6 +166,10 @@ class Game {
         }
 
         this.socket.send(JSON.stringify(payload))
+    }
+
+    async onSubmitSchupfen(event) {
+
     }
 
     onSortByValue(event) {
@@ -297,69 +303,86 @@ class Game {
         });
     }
 
+    updateLobby() {
+        this.lobbyButtons.style.display = "flex";
+
+        this.startGameButton.disabled = false;
+    }
+
+    updatePlaying() {
+        this.playingButtons.style.display = "flex";
+
+        this.sortByColorButton.disabled = false;
+        this.sortByValueButton.disabled = false;
+
+        const isMyTurn = this.id === this.entityAtMoveId;
+
+        this.playCardButton.disabled = !isMyTurn;
+        this.passButton.disabled = !isMyTurn;
+    }
+
+    updateSchupfen() {
+        this.schupfenButtons.style.display = "flex";
+
+        const buttons = {
+            left: this.schupfenLeftOpponentButton,
+            team: this.schupfenTeammateButton,
+            right: this.schupfenRightOpponentButton
+        };
+
+        for (const [mode, button] of Object.entries(buttons)) {
+            button.innerText = this.schupfen[mode] ?? "Choose...";
+
+            button.classList.toggle(
+                "highlight_button",
+                this.schupfenMode === mode
+            );
+        }
+    }
+
     update() {
-        this.lobbyButtons.style.display = "none"
-        this.schupfenButtons.style.display = "none"
-        this.playingButtons.style.display = "none"
-
-        this.startGameButton.disabled = this.gameState !== "LOBBY";
-
-        this.sortByColorButton.disabled = this.gameState !== "PLAYING";
-        this.sortByValueButton.disabled = this.gameState !== "PLAYING";
-
-        this.playCardButton.disabled = this.id !== this.entityAtMoveId
-        this.passButton.disabled = this.id !== this.entityAtMoveId
+        this.lobbyButtons.style.display = "none";
+        this.schupfenButtons.style.display = "none";
+        this.playingButtons.style.display = "none";
 
         switch (this.gameState) {
             case "LOBBY":
-                this.lobbyButtons.style.display = "flex"
+                this.updateLobby()
                 break
             case "SCHUPFEN":
-                this.schupfenButtons.style.display = "flex"
-
-                this.schupfenLeftOpponentButton.innerText = this.schupfen.left === undefined ? "Choose..." : this.schupfen.left
-                this.schupfenTeammateButton.innerText = this.schupfen.team === undefined ? "Choose..." : this.schupfen.team
-                this.schupfenRightOpponentButton.innerText = this.schupfen.right === undefined ? "Choose..." : this.schupfen.right
-
-                this.schupfenLeftOpponentButton.classList.remove("highlight_button");
-                this.schupfenTeammateButton.classList.remove("highlight_button");
-                this.schupfenRightOpponentButton.classList.remove("highlight_button");
-
-                switch (this.schupfenMode) {
-                    case "left":
-                        this.schupfenLeftOpponentButton.classList.add("highlight_button");
-                        break
-                    case "team":
-                        this.schupfenTeammateButton.classList.add("highlight_button");
-                        break
-                    case "right":
-                        this.schupfenRightOpponentButton.classList.add("highlight_button");
-                        break
-                }
-
-                if (this.schupfenMode === undefined || this.selectedCards.size < 1) return
-
-                this.schupfen[this.schupfenMode] = this.selectedCards.keys().next().value
-                this.selectedCards.clear()
-                this.schupfenMode = undefined
+                this.handleSchupfenSelection()
+                this.updateSchupfen()
                 break
             case "PLAYING":
-                this.playingButtons.style.display = "flex"
+                this.updatePlaying()
                 break
         }
     }
 
+    handleSchupfenSelection() {
+        if (this.schupfenMode === undefined || this.selectedCards.size === 0) return;
+
+        const selectedCard = this.selectedCards.values().next().value;
+
+        this.schupfen[this.schupfenMode] = selectedCard;
+
+        this.selectedCards.clear();
+        this.schupfenMode = undefined;
+    }
+
     render() {
-        this.clearScreen()
+        this.clearScreen();
 
         if (!this.state) return;
 
         this.renderCurrentCombination();
         this.renderPlayerHand();
         this.renderBacksides();
-
         this.renderDiscardPile();
-        this.debug();
+
+        if (this.debugMode) {
+            this.debug();
+        }
     }
 
     getCardListOrigin(len, x, y) {
