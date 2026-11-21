@@ -141,6 +141,8 @@ class Game {
 
         this.handlePublicState(state.game.public)
         this.sortByFn()
+
+        this.gameLoop()
     }
 
     async onSocketClose(event) {
@@ -262,9 +264,9 @@ class Game {
 
         this.initInput();
 
-        requestAnimationFrame((time) => {
+        /* requestAnimationFrame((time) => {
             this.gameLoop(time);
-        });
+        }); */
     }
 
     initInput() {
@@ -298,9 +300,9 @@ class Game {
         this.update();
         this.render();
 
-        requestAnimationFrame((time) => {
+        /* requestAnimationFrame((time) => {
             this.gameLoop(time);
-        });
+        }); */
     }
 
     updateLobby() {
