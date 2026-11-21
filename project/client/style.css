@@ -61,6 +61,10 @@ canvas {
     gap: 1rem;
 }
 
+.highlight_button {
+    border: 3px solid yellow;
+}
+
 .sort_by {
     display: flex;
     gap: 1rem;

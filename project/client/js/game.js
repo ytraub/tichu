@@ -65,6 +65,8 @@ class Game {
         this.schupfenLeftOpponentButton = document.getElementById("schupfen_left_opponent_btn");
         this.schupfenLeftOpponentButton.onclick = () => this.schupfenMode = "left"
 
+        this.schupfenSubmitButton = document.getElementById("schupfen_submit");
+
         this.startGameButton = document.getElementById("start_game_btn");
         this.startGameButton.onclick = (event) => this.startGame(event);
 
@@ -318,6 +320,22 @@ class Game {
                 this.schupfenLeftOpponentButton.innerText = this.schupfen.left === undefined ? "Choose..." : this.schupfen.left
                 this.schupfenTeammateButton.innerText = this.schupfen.team === undefined ? "Choose..." : this.schupfen.team
                 this.schupfenRightOpponentButton.innerText = this.schupfen.right === undefined ? "Choose..." : this.schupfen.right
+
+                this.schupfenLeftOpponentButton.classList.remove("highlight_button");
+                this.schupfenTeammateButton.classList.remove("highlight_button");
+                this.schupfenRightOpponentButton.classList.remove("highlight_button");
+
+                switch (this.schupfenMode) {
+                    case "left":
+                        this.schupfenLeftOpponentButton.classList.add("highlight_button");
+                        break
+                    case "team":
+                        this.schupfenTeammateButton.classList.add("highlight_button");
+                        break
+                    case "right":
+                        this.schupfenRightOpponentButton.classList.add("highlight_button");
+                        break
+                }
 
                 if (this.schupfenMode === undefined || this.selectedCards.size < 1) return
 
