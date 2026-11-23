@@ -82,7 +82,7 @@ class Player(Entity):
             "game": game_state,
             "player": self.get_private_state() | self.get_public_state(),
         }
-
+        
         await self.client.send(json.dumps(state))
 
 
@@ -109,10 +109,54 @@ class RandomBot(Bot):
                     CardsNotOnHandException,
                 ):
                     continue
-                legal.append(list(ids))
 
+                legal.append(list(ids))
+        
         can_pass = game.current_combination is not None
         if can_pass and (not legal or random.random() < 0.3):
             return {"pass": True}
 
+        print(legal)
+
         return {"played_cards": random.choice(legal)}
+
+class LowerBot(Bot):
+    def choose_action(self, game) -> dict[str, Any]:
+        legal: list[list[str]] = []
+
+        for size in range(1, len(self.hand) + 1):
+            for ids in combinations(self.hand, size):
+                try:
+                    game.can_play(self.hand, list(ids))
+                except (
+                    InvalidCombinationException,
+                    WrongCombinationException,
+                    LowCombinationException,
+                    CardsNotOnHandException,
+                ):
+                    continue
+
+                legal.append(list(ids))
+
+        can_pass = game.current_combination is not None
+        if can_pass and not legal:
+            return {"pass": True}
+
+        best_hand: list[str] = []
+        best_score = None
+
+        for h in legal:
+            values = []
+            for cid in h:
+                values.append[CARD_MAP[cid].value]
+            
+            score = (max(values), sum(values))
+            if best_score is None or best_score > score:
+                best_score = score
+                best_hand = h
+
+        return {"played_cards": best_hand}
+
+class NeatBot(Bot):
+    def choose_action(self, game) -> dict[str, Any]:
+        return {"pass": True}
