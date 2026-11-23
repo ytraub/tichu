@@ -339,7 +339,14 @@ class Game {
     }
 
     updateSchupfen() {
+        const has_schupfed = !!this.state.player.schupfen
+
         this.schupfenButtons.style.display = "flex";
+        this.schupfenSubmitButton.disabled = false;
+
+        if (has_schupfed) {
+            this.schupfenSubmitButton.disabled = true;
+        }
 
         const buttons = {
             left: this.schupfenLeftOpponentButton,
@@ -348,6 +355,13 @@ class Game {
         };
 
         for (const [mode, button] of Object.entries(buttons)) {
+            button.disabled = false;
+
+            if (has_schupfed) {
+                button.disabled = true;
+                continue
+            }
+
             button.innerText = this.schupfen[mode] ?? "Choose...";
 
             button.classList.toggle(
