@@ -232,9 +232,11 @@ class Game {
         if (Object.values(this.schupfen).some(value => value === undefined)) return;
 
         const payload = {
-            [this.matePublicState.id]: this.schupfen.team,
-            [this.leftOpponentPublicState.id]: this.schupfen.left,
-            [this.rightOpponentPublicState.id]: this.schupfen.right
+            "schupfen": {
+                [this.matePublicState.id]: this.schupfen.team,
+                [this.leftOpponentPublicState.id]: this.schupfen.left,
+                [this.rightOpponentPublicState.id]: this.schupfen.right
+            }
         };
 
         this.socket.send(JSON.stringify(payload))

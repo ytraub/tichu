@@ -20,6 +20,8 @@ class Entity:
     hand: list[str]
     ready: bool = False
 
+    schupfen: dict | None = None
+
     team_key: str
     entity_key: str
 
@@ -34,6 +36,9 @@ class Entity:
     def get_ready(self) -> bool:
         return self.ready
 
+    def get_schupfen(self) -> dict | None:
+        return self.schupfen
+
     def get_public_state(self) -> dict[str, Any]:
         return {
             "id": self.id,
@@ -46,10 +51,13 @@ class Entity:
         return "mahong" in self.hand
 
     def get_private_state(self) -> dict[str, Any]:
-        return {"hand": self.hand}
+        return {"hand": self.hand, "schupfen": self.schupfen}
 
     def set_ready(self, state: bool) -> None:
         self.ready = state
+
+    def set_schupfen(self, state: dict) -> None:
+        self.schupfen = state
 
     def set_hand(self, cardIds: list[str]) -> None:
         self.hand = cardIds

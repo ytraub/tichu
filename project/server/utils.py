@@ -16,6 +16,16 @@ class GameState(Enum):
     PLAYING = 3
 
 
+class SchupfenException(Exception):
+    pass
+
+
+class MissingSchupfenException(SchupfenException):
+    pass
+
+class InvalidCardException(SchupfenException):
+    pass
+
 class CardsNotOnHandException(Exception):
     pass
 

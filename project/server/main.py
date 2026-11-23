@@ -12,6 +12,7 @@ from combinations import card_ids_to_combination, Combination
 from utils import (
     Message,
     GameState,
+    MissingSchupfenException,
     CardsNotOnHandException,
     InvalidCombinationException,
     WrongCombinationException,
@@ -115,13 +116,6 @@ class Game:
 
     def get_entities_amount(self) -> int:
         return len(self.entities)
-
-    def get_entities_ready(self) -> bool:
-        for entity in self.entities:
-            if not entity.get_ready():
-                return False
-
-        return True
 
     def set_starter(self) -> None:
         if self.current_move_idx is None:
@@ -240,7 +234,9 @@ class Game:
                     entity.set_ready(message.payload.get("ready"))
 
             case GameState.SCHUPFEN:
-                pass
+                if message.payload.get("schupfen"):
+                    logger.info(f"{entity.get_id()} has schupfed")
+                    entity.set_schupfen(message.payload.get("schupfen"))
 
             case GameState.PLAYING:
                 # Only continue if player is at move
@@ -289,6 +285,15 @@ class Game:
         for i, entity in enumerate(self.entities):
             entity.set_hand(hands[i])
 
+    def schupf(self) -> None:
+        for entity in self.entities:
+            schupfen = entity.get_schupfen()
+
+            if not schupfen:
+                raise MissingSchupfenException()
+
+            print(schupfen)
+
     async def game_loop(self) -> None:
         def init_game() -> None:
             self.move_count = 0
@@ -301,9 +306,12 @@ class Game:
             self.current_combination = None
 
         def is_game_ready() -> bool:
-            return (
-                self.get_entities_amount() >= MIN_PLAYERS and self.get_entities_ready()
+            return self.get_entities_amount() >= MIN_PLAYERS and all(
+                entity.get_ready() is True for entity in self.entities
             )
+
+        def is_schupfen_over() -> bool:
+            return all(entity.get_schupfen() is not None for entity in self.entities)
 
         while True:
             match self.game_state:
@@ -318,8 +326,10 @@ class Game:
                         self.game_state = GameState.SCHUPFEN
 
                 case GameState.SCHUPFEN:
-                    pass
-                    # self.game_state = GameState.PLAYING
+                    if is_schupfen_over():
+                        self.schupf()
+                        self.game_state = GameState.PLAYING
+
                 case GameState.PLAYING:
                     self.set_starter()
 
