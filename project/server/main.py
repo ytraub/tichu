@@ -14,6 +14,7 @@ from utils import (
     GameState,
     MissingSchupfenException,
     CardsNotOnHandException,
+    AlreadySchupfedException,
     InvalidCombinationException,
     WrongCombinationException,
     LowCombinationException,
@@ -235,8 +236,9 @@ class Game:
 
             case GameState.SCHUPFEN:
                 if message.payload.get("schupfen"):
-                    logger.info(f"{entity.get_id()} has schupfed")
-                    entity.set_schupfen(message.payload.get("schupfen"))
+                    # Makes sure player can not resubmit schupfen when waiting for others
+                    if entity.get_schupfen() is None:
+                        entity.set_schupfen(message.payload.get("schupfen"))
 
             case GameState.PLAYING:
                 # Only continue if player is at move

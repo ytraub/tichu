@@ -26,6 +26,9 @@ class MissingSchupfenException(SchupfenException):
 class InvalidCardException(SchupfenException):
     pass
 
+class AlreadySchupfedException(SchupfenException):
+    pass
+
 class CardsNotOnHandException(Exception):
     pass
 
