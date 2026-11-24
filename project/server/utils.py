@@ -23,11 +23,14 @@ class SchupfenException(Exception):
 class MissingSchupfenException(SchupfenException):
     pass
 
-class InvalidCardException(SchupfenException):
+
+class UnknownSchupfenReciverException(SchupfenException):
     pass
+
 
 class AlreadySchupfedException(SchupfenException):
     pass
+
 
 class CardsNotOnHandException(Exception):
     pass

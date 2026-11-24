@@ -14,6 +14,7 @@ from utils import (
     GameState,
     MissingSchupfenException,
     CardsNotOnHandException,
+    UnknownSchupfenReciverException,
     AlreadySchupfedException,
     InvalidCombinationException,
     WrongCombinationException,
@@ -199,7 +200,7 @@ class Game:
         return combination
 
     def try_play_cards(self, entity: Entity, card_ids: list[str]) -> None:
-        combination = self.can_play(entity.hand, card_ids)
+        combination = self.can_play(entity.get_hand(), card_ids)
 
         if self.current_combination:
             self.stack.append(self.current_combination)
@@ -237,8 +238,17 @@ class Game:
             case GameState.SCHUPFEN:
                 if message.payload.get("schupfen"):
                     # Makes sure player can not resubmit schupfen when waiting for others
-                    if entity.get_schupfen() is None:
-                        entity.set_schupfen(message.payload.get("schupfen"))
+                    if entity.get_schupfen() is not None:
+                        raise AlreadySchupfedException()
+
+                    schupfen = message.payload.get("schupfen")
+                    entity_hand = entity.get_hand()
+
+                    for _, card_id in schupfen.items():
+                        if not card_id in entity_hand:
+                            raise CardsNotOnHandException()
+
+                    entity.set_schupfen(message.payload.get("schupfen"))
 
             case GameState.PLAYING:
                 # Only continue if player is at move
@@ -287,14 +297,35 @@ class Game:
         for i, entity in enumerate(self.entities):
             entity.set_hand(hands[i])
 
+    def try_schupf_card(self, sender: Entity, reciever_id: str, card_id: str) -> None:
+        sender_hand = sender.get_hand()
+
+        if not card_id in sender_hand:
+            raise CardsNotOnHandException()
+
+        card = sender_hand.pop(sender_hand.index(card_id))
+
+        reciever = self.get_entity_by_id(reciever_id)
+
+        if not reciever:
+            raise UnknownSchupfenReciverException()
+
+        reciever.hand.append(card)
+
     def schupf(self) -> None:
         for entity in self.entities:
             schupfen = entity.get_schupfen()
 
             if not schupfen:
+                # This shouldn't happen
                 raise MissingSchupfenException()
 
-            print(schupfen)
+            for player_id, card_id in schupfen.items():
+                try:
+                    self.try_schupf_card(entity, player_id, card_id)
+                except CardsNotOnHandException:
+                    # This shouldn't happen
+                    pass
 
     async def game_loop(self) -> None:
         def init_game() -> None:

@@ -38,6 +38,9 @@ class Entity:
 
     def get_schupfen(self) -> dict | None:
         return self.schupfen
+    
+    def get_hand(self) -> list[str]:
+        return self.hand
 
     def get_public_state(self) -> dict[str, Any]:
         return {
