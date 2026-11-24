@@ -20,7 +20,7 @@ from utils import (
     WrongCombinationException,
     LowCombinationException,
 )
-from entities import Player, Entity, Bot, RandomBot
+from entities import Player, Entity, Bot, RandomBot, LowerBot
 
 UPDATE_RATE = 1 / 30
 SOCKET_PORT = 5400
@@ -283,7 +283,7 @@ class Game:
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
-            self.add_entity(RandomBot())
+            self.add_entity(LowerBot())
 
     def deal_cards(self) -> None:
         shuffled = list(CARD_MAP)
