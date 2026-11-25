@@ -38,7 +38,7 @@ class Entity:
 
     def get_schupfen(self) -> dict | None:
         return self.schupfen
-    
+
     def get_hand(self) -> list[str]:
         return self.hand
 
@@ -85,7 +85,7 @@ class Player(Entity):
             "game": game_state,
             "player": self.get_private_state() | self.get_public_state(),
         }
-        
+
         await self.client.send(json.dumps(state))
 
 
@@ -93,38 +93,77 @@ class Bot(Entity):
     def __init__(self) -> None:
         super().__init__(str(uuid.uuid4()), [], True)
 
-    def choose_action(self, game) -> dict[str, Any]:
+    def choose_action(self, state: Any, game) -> dict[str, Any] | None:
         return {"pass": True}
 
 
 class RandomBot(Bot):
-    def choose_action(self, game) -> dict[str, Any]:
-        legal: list[list[str]] = []
+    def choose_action(self, state: Any, game) -> dict[str, Any] | None:
+        game_state = state["game_state"]
 
-        for size in range(1, len(self.hand) + 1):
-            for ids in combinations(self.hand, size):
-                try:
-                    game.can_play(self.hand, list(ids))
-                except (
-                    InvalidCombinationException,
-                    WrongCombinationException,
-                    LowCombinationException,
-                    CardsNotOnHandException,
-                ):
-                    continue
+        match game_state:
+            case "SCHUPFEN":
+                if self.schupfen is not None:
+                    return
 
-                legal.append(list(ids))
-        
-        can_pass = game.current_combination is not None
-        if can_pass and (not legal or random.random() < 0.3):
-            return {"pass": True}
+                teams = state["teams"]
 
-        print(legal)
+                mate_entity_key = "a" if self.entity_key == "b" else "b"
 
-        return {"played_cards": random.choice(legal)}
+                opposing_team_key = "a" if self.team_key == "b" else "b"
 
-class LowerBot(Bot):
-    def choose_action(self, game) -> dict[str, Any]:
+                left_entity_key = (
+                    ("b" if self.team_key == "a" else "a")
+                    if self.entity_key == "a"
+                    else ("a" if self.team_key == "a" else "b")
+                )
+
+                right_entity_key = (
+                    ("a" if self.team_key == "a" else "b")
+                    if self.entity_key == "a"
+                    else ("b" if self.team_key == "a" else "a")
+                )
+
+                mate_id = teams[self.team_key][mate_entity_key]
+                left_id = teams[opposing_team_key][left_entity_key]
+                right_id = teams[opposing_team_key][left_entity_key]
+
+                cards = random.sample(self.hand, 3)
+
+                return {
+                    "schupfen": {
+                        mate_id: cards[0],
+                        left_id: cards[1],
+                        right_id: cards[2],
+                    }
+                }
+
+            case "PLAYING":
+                legal: list[list[str]] = []
+
+                for size in range(1, len(self.hand) + 1):
+                    for ids in combinations(self.hand, size):
+                        try:
+                            game.can_play(self.hand, list(ids))
+                        except (
+                            InvalidCombinationException,
+                            WrongCombinationException,
+                            LowCombinationException,
+                            CardsNotOnHandException,
+                        ):
+                            continue
+
+                        legal.append(list(ids))
+
+                can_pass = state["current_combination"] is not None
+                if can_pass and (not legal or random.random() < 0.3):
+                    return {"pass": True}
+
+                return {"played_cards": random.choice(legal)}
+
+
+""" class LowerBot(Bot):
+    def choose_action(self, state: Any, game) -> dict[str, Any] | None:
         legal: list[list[str]] = []
 
         for size in range(1, len(self.hand) + 1):
@@ -152,7 +191,7 @@ class LowerBot(Bot):
             values = []
             for cid in h:
                 values.append[CARD_MAP[cid].value]
-            
+
             score = (max(values), sum(values))
             if best_score is None or best_score > score:
                 best_score = score
@@ -160,6 +199,8 @@ class LowerBot(Bot):
 
         return {"played_cards": best_hand}
 
+
 class NeatBot(Bot):
     def choose_action(self, game) -> dict[str, Any]:
         return {"pass": True}
+ """

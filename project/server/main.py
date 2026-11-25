@@ -20,7 +20,7 @@ from utils import (
     WrongCombinationException,
     LowCombinationException,
 )
-from entities import Player, Entity, Bot, RandomBot, LowerBot
+from entities import Player, Entity, Bot, RandomBot  # ,LowerBot
 
 UPDATE_RATE = 1 / 30
 SOCKET_PORT = 5400
@@ -210,13 +210,14 @@ class Game:
         for card in card_ids:
             entity.hand.remove(card)
 
-    def queue_bot_action(self) -> None:
-        entity = self.get_entity_at_move()
+    def queue_bot_actions(self) -> None:
+        for entity in self.entities:
+            if not isinstance(entity, Bot):
+                continue
 
-        if not isinstance(entity, Bot):
-            return
-
-        self.message_queue.append(Message(entity.get_id(), entity.choose_action(self)))
+            self.message_queue.append(
+                Message(entity.get_id(), entity.choose_action(self.state(), self))
+            )
 
     async def handle_ws_in(self) -> None:
         if not len(self.message_queue):
@@ -224,10 +225,10 @@ class Game:
 
         message = self.message_queue.pop(0)
         entity = self.get_entity_by_id(message.entity_id)
-        if not entity:
-            return
-
         entity_at_move = self.get_entity_at_move()
+
+        if entity is None or not message.payload:
+            return
 
         match self.game_state:
             case GameState.LOBBY:
@@ -239,7 +240,8 @@ class Game:
                 if message.payload.get("schupfen"):
                     # Makes sure player can not resubmit schupfen when waiting for others
                     if entity.get_schupfen() is not None:
-                        raise AlreadySchupfedException()
+                        return
+                        #raise AlreadySchupfedException()
 
                     schupfen = message.payload.get("schupfen")
                     entity_hand = entity.get_hand()
@@ -252,7 +254,7 @@ class Game:
 
             case GameState.PLAYING:
                 # Only continue if player is at move
-                if not entity_at_move or not entity.id == entity_at_move.id:
+                if entity_at_move is None or not entity.id == entity_at_move.id:
                     return
 
                 if message.payload.get("played_cards"):
@@ -283,7 +285,7 @@ class Game:
 
     def init_bots(self) -> None:
         for _ in range(MAX_PLAYERS - self.get_entities_amount()):
-            self.add_entity(LowerBot())
+            self.add_entity(RandomBot())
 
     def deal_cards(self) -> None:
         shuffled = list(CARD_MAP)
@@ -366,13 +368,13 @@ class Game:
                 case GameState.PLAYING:
                     self.set_starter()
 
-                    self.queue_bot_action()
-
                     for entity in self.entities:
                         try:
                             await entity.send_state(self.state())
                         except websockets.ConnectionClosed:
                             self.remove_entity(entity)
+
+            self.queue_bot_actions()
 
             await self.handle_ws_in()
             await self.handle_ws_out()
