@@ -210,13 +210,20 @@ class Game:
         for card in card_ids:
             entity.hand.remove(card)
 
-    def queue_bot_actions(self) -> None:
+    def queue_bot_play(self) -> None:
+        for entity in self.entities:
+            if not isinstance(entity, Bot):
+                continue
+
+            self.message_queue.append(Message(entity.get_id(), entity.do_play(self)))
+
+    def queue_bot_schupfen(self) -> None:
         for entity in self.entities:
             if not isinstance(entity, Bot):
                 continue
 
             self.message_queue.append(
-                Message(entity.get_id(), entity.choose_action(self.state(), self))
+                Message(entity.get_id(), entity.do_schupfen(self))
             )
 
     async def handle_ws_in(self) -> None:
@@ -241,7 +248,7 @@ class Game:
                     # Makes sure player can not resubmit schupfen when waiting for others
                     if entity.get_schupfen() is not None:
                         return
-                        #raise AlreadySchupfedException()
+                        # raise AlreadySchupfedException()
 
                     schupfen = message.payload.get("schupfen")
                     entity_hand = entity.get_hand()
@@ -317,8 +324,10 @@ class Game:
     def schupf(self) -> None:
         for entity in self.entities:
             schupfen = entity.get_schupfen()
+            
+            print(schupfen)
 
-            if not schupfen:
+            if schupfen is None:
                 # This shouldn't happen
                 raise MissingSchupfenException()
 
@@ -326,7 +335,6 @@ class Game:
                 try:
                     self.try_schupf_card(entity, player_id, card_id)
                 except CardsNotOnHandException:
-                    # This shouldn't happen
                     pass
 
     async def game_loop(self) -> None:
@@ -345,8 +353,17 @@ class Game:
                 entity.get_ready() is True for entity in self.entities
             )
 
+        def have_players_schupfed() -> bool:
+            return all(
+               (entity.get_schupfen() is not None) or isinstance(entity, Bot)
+                for entity in self.entities
+            )
+
         def is_schupfen_over() -> bool:
-            return all(entity.get_schupfen() is not None for entity in self.entities)
+            return all(
+               (entity.get_schupfen() is not None)
+                for entity in self.entities
+            )
 
         while True:
             match self.game_state:
@@ -361,6 +378,9 @@ class Game:
                         self.game_state = GameState.SCHUPFEN
 
                 case GameState.SCHUPFEN:
+                    if have_players_schupfed():
+                        self.queue_bot_schupfen()
+                    
                     if is_schupfen_over():
                         self.schupf()
                         self.game_state = GameState.PLAYING
@@ -374,7 +394,7 @@ class Game:
                         except websockets.ConnectionClosed:
                             self.remove_entity(entity)
 
-            self.queue_bot_actions()
+                    self.queue_bot_play()
 
             await self.handle_ws_in()
             await self.handle_ws_out()

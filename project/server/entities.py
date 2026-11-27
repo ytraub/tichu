@@ -93,73 +93,70 @@ class Bot(Entity):
     def __init__(self) -> None:
         super().__init__(str(uuid.uuid4()), [], True)
 
-    def choose_action(self, state: Any, game) -> dict[str, Any] | None:
+    def do_schupfen(self, game) -> dict[str, Any] | None:
+        return {"schupfen": {}}
+
+    def do_play(self, game) -> dict[str, Any] | None:
         return {"pass": True}
 
 
 class RandomBot(Bot):
-    def choose_action(self, state: Any, game) -> dict[str, Any] | None:
-        game_state = state["game_state"]
+    def do_play(self, game) -> dict[str, Any] | None:
+        legal: list[list[str]] = []
 
-        match game_state:
-            case "SCHUPFEN":
-                if self.schupfen is not None:
-                    return
+        for size in range(1, len(self.hand) + 1):
+            for ids in combinations(self.hand, size):
+                try:
+                    game.can_play(self.hand, list(ids))
+                except (
+                    InvalidCombinationException,
+                    WrongCombinationException,
+                    LowCombinationException,
+                    CardsNotOnHandException,
+                ):
+                    continue
 
-                teams = state["teams"]
+                legal.append(list(ids))
 
-                mate_entity_key = "a" if self.entity_key == "b" else "b"
+        can_pass = game.current_combination is not None
+        if can_pass and (not legal or random.random() < 0.3):
+            return {"pass": True}
 
-                opposing_team_key = "a" if self.team_key == "b" else "b"
+        return {"played_cards": random.choice(legal)}
 
-                left_entity_key = (
-                    ("b" if self.team_key == "a" else "a")
-                    if self.entity_key == "a"
-                    else ("a" if self.team_key == "a" else "b")
-                )
+    def do_schupfen(self, game) -> dict[str, Any] | None:
+        if self.schupfen is not None:
+            return
 
-                right_entity_key = (
-                    ("a" if self.team_key == "a" else "b")
-                    if self.entity_key == "a"
-                    else ("b" if self.team_key == "a" else "a")
-                )
+        mate_entity_key = "a" if self.entity_key == "b" else "b"
 
-                mate_id = teams[self.team_key][mate_entity_key]
-                left_id = teams[opposing_team_key][left_entity_key]
-                right_id = teams[opposing_team_key][left_entity_key]
+        opposing_team_key = "a" if self.team_key == "b" else "b"
 
-                cards = random.sample(self.hand, 3)
+        left_entity_key = (
+            ("b" if self.team_key == "a" else "a")
+            if self.entity_key == "a"
+            else ("a" if self.team_key == "a" else "b")
+        )
 
-                return {
-                    "schupfen": {
-                        mate_id: cards[0],
-                        left_id: cards[1],
-                        right_id: cards[2],
-                    }
-                }
+        right_entity_key = (
+            ("a" if self.team_key == "a" else "b")
+            if self.entity_key == "a"
+            else ("b" if self.team_key == "a" else "a")
+        )
 
-            case "PLAYING":
-                legal: list[list[str]] = []
+        mate_id = game.teams[self.team_key][mate_entity_key]
+        left_id = game.teams[opposing_team_key][left_entity_key]
+        right_id = game.teams[opposing_team_key][right_entity_key]
 
-                for size in range(1, len(self.hand) + 1):
-                    for ids in combinations(self.hand, size):
-                        try:
-                            game.can_play(self.hand, list(ids))
-                        except (
-                            InvalidCombinationException,
-                            WrongCombinationException,
-                            LowCombinationException,
-                            CardsNotOnHandException,
-                        ):
-                            continue
+        cards = random.sample(self.hand, 3)
 
-                        legal.append(list(ids))
-
-                can_pass = state["current_combination"] is not None
-                if can_pass and (not legal or random.random() < 0.3):
-                    return {"pass": True}
-
-                return {"played_cards": random.choice(legal)}
+        return {
+            "schupfen": {
+                mate_id: cards[0],
+                left_id: cards[1],
+                right_id: cards[2],
+            }
+        }
 
 
 """ class LowerBot(Bot):
